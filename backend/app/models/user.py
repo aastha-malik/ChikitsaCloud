@@ -24,6 +24,8 @@ class AuthUser(Base):
     # Relationship
     profile = relationship("UserProfile", back_populates="auth_user", uselist=False, cascade="all, delete-orphan")
     emergency_contacts = relationship("EmergencyContact", back_populates="auth_user", cascade="all, delete-orphan")
+    medical_records = relationship("MedicalRecord", back_populates="auth_user", cascade="all, delete-orphan")
+
 
 
 class UserProfile(Base):
