@@ -8,14 +8,14 @@ class ClinicalKnowledgeBase:
 
     @staticmethod
     def get_bp_range(age: int):
-        # BP targets loosen slightly with age
+        
         if age > 65:
-            return (90, 140), (60, 90)  # Systolic, Diastolic
+            return (90, 140), (60, 90)  
         return (90, 120), (60, 80)
 
     @staticmethod
     def get_heart_rate_range(age: int, active_status: str = "Average"):
-        # Athletes may have lower resting HR
+        
         if active_status == "Athlete":
             return (40, 100)
         return (60, 100)
@@ -23,7 +23,7 @@ class ClinicalKnowledgeBase:
     @staticmethod
     def get_hemoglobin_range(gender: str, age: int):
         if age < 18:
-            return (11.0, 16.0) # Pediatric simplified
+            return (11.0, 16.0) 
         if gender.lower() == 'male':
             return (13.8, 17.2)
         else:
@@ -40,4 +40,5 @@ class ClinicalKnowledgeBase:
     def get_glucose_range(type: str):
         if type == "Fasting":
             return (70, 99)
-        return (70, 140) # Random/Post-prandial
+        return (70, 140) 
+
