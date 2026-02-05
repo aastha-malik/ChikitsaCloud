@@ -10,10 +10,10 @@ class MLHealthRiskModel:
         self.model = joblib.load(model_path)
 
     def predict(self, patient, values):
-        # 1. Prepare gender
+        
         gender_val = 1 if patient.gender.lower() in ["male", "m"] else 0
         
-        # 2. Create DataFrame (Fixed indentation)
+        
         features_df = pd.DataFrame([[  
             patient.age,
             gender_val,
@@ -27,9 +27,10 @@ class MLHealthRiskModel:
         ]], columns=['age', 'gender', 'height_cm', 'weight_kg', 'bmi', 
                      'systolic_bp', 'diastolic_bp', 'glucose', 'cholesterol'])
         
-        # 3. Predict (Fixed variable name from 'features' to 'features_df')
+        
         try:
             prediction = self.model.predict(features_df)[0]
             return int(prediction)
         except Exception as e:
+
             return f"Error: {e}"
