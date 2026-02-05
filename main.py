@@ -1,9 +1,9 @@
 import json
 from medical_schema import PatientDemographics, MedicalParameter
 from engine import ChikitsaEngine
-from ml_model import MLHealthRiskModel  # <--- IMPORT ADDED
+from ml_model import MLHealthRiskModel  
 
-# ANSI color codes
+
 COLOR_MAP = {
     "🟣": "\033[95m", "🔴": "\033[91m", "🟡": "\033[93m", 
     "🟨": "\033[33m", "⚪": "\033[92m"
@@ -22,7 +22,7 @@ def print_colored_result(result):
 def main():
     print("\n===== CHIKITSACLOUD | AI Medical Data Evaluation =====\n")
 
-    # 1. PATIENT INPUT
+    
     age = int(input("Enter Age: "))
     gender = input("Enter Gender (Male/Female): ")
     height = get_float("Enter Height (cm): ")
@@ -34,7 +34,7 @@ def main():
     print(f"\nCalculated BMI: {patient.bmi:.2f}")
     print("-" * 60)
 
-    # 2. MEDICAL DATA INPUT (Added Cholesterol)
+    
     medical_data = [
         MedicalParameter("Systolic BP", get_float("Enter Systolic BP (mmHg): "), "mmHg", "Vitals"),
         MedicalParameter("Diastolic BP", get_float("Enter Diastolic BP (mmHg): "), "mmHg", "Vitals"),
@@ -45,22 +45,21 @@ def main():
         MedicalParameter("Cholesterol", get_float("Enter Cholesterol (mg/dL): "), "mg/dL", "Lab") # <--- ADDED
     ]
 
-    # 3. RULE ENGINE RUN
+    
     engine = ChikitsaEngine()
     results = []
     
-    # Create a simple dictionary for the ML model
-    # This maps "Systolic BP" -> 120.0, etc.
+    
     ml_input_values = {} 
 
     print("\n===== RULE ENGINE ANALYSIS =====\n")
     for param in medical_data:
         evaluation = engine.evaluate(patient, param)
         results.append(evaluation)
-        ml_input_values[param.name] = param.value  # Store for ML
+        ml_input_values[param.name] = param.value  
         print_colored_result(evaluation)
 
-    # 4. ML MODEL RUN (The missing part)
+    
     print("\n===== ML RISK PREDICTION =====\n")
     try:
         ml_model = MLHealthRiskModel()
@@ -75,7 +74,7 @@ def main():
         risk_text = "Error"
         print(f"ML Model Failed: {e}")
 
-    # 5. JSON OUTPUT
+    
     final_output = {
         "platform": "CHIKITSACLOUD",
         "status": "success",
@@ -94,4 +93,5 @@ def main():
     print(json.dumps(final_output, indent=4))
 
 if __name__ == "__main__":
+
     main()
