@@ -14,13 +14,13 @@ class ChikitsaEngine:
         if low <= value <= high:
             return SeverityColor.WHITE, "Normal", "Value is within the healthy range for your profile."
 
-        # Calculate percentage deviation
+        
         midpoint = (low + high) / 2
         deviation_pct = abs(value - midpoint) / midpoint * 100
         
         direction = "High" if value > high else "Low"
 
-        # Critical Logic (Simplified)
+        
         if deviation_pct > 50 or (is_critical_metric and deviation_pct > 30):
             return SeverityColor.PURPLE, f"Critically {direction}", "Immediate medical attention required."
         
@@ -37,12 +37,12 @@ class ChikitsaEngine:
         factors = []
         is_critical = False
 
-        # --- Dynamic Logic Switching ---
+        
         
         if param.name == "Systolic BP":
             low, high = self.kb.get_bp_range(patient.age)[0]
             factors.append(f"Age: {patient.age}")
-            is_critical = True # BP is vital
+            is_critical = True 
             
         elif param.name == "Diastolic BP":
             low, high = self.kb.get_bp_range(patient.age)[1]
@@ -64,7 +64,7 @@ class ChikitsaEngine:
         elif param.name == "SpO2":
             low, high = 95, 100
             is_critical = True
-            # Custom critical override for SpO2
+            
             if param.value < 88:
                 return EvaluationResult(
                     param.name, param.value, param.unit, f"{low}-{high}", "Critically Low",
@@ -72,15 +72,15 @@ class ChikitsaEngine:
                 )
 
         else:
-            # Fallback for demo purposes
+            
             low, high = 0, 100 
 
-        # --- Calculate Severity ---
+        
         severity_enum, deviation_lvl, expl_base = self.determine_severity(
             param.value, low, high, is_critical
         )
 
-        # Enhance Explainability
+        
         explanation = f"{expl_base} {deviation_lvl} values may indicate underlying strain."
         if severity_enum == SeverityColor.WHITE:
             explanation = "Excellent. Maintain current lifestyle."
@@ -95,3 +95,4 @@ class ChikitsaEngine:
             explanation=explanation,
             influencing_factors=factors
         )
+
