@@ -42,7 +42,7 @@ def main():
         MedicalParameter("Hemoglobin", get_float("Enter Hemoglobin (g/dL): "), "g/dL", "Lab"),
         MedicalParameter("Creatinine", get_float("Enter Creatinine (mg/dL): "), "mg/dL", "Lab"),
         MedicalParameter("Blood Sugar (Fasting)", get_float("Enter Blood Sugar (mg/dL): "), "mg/dL", "Lab"),
-        MedicalParameter("Cholesterol", get_float("Enter Cholesterol (mg/dL): "), "mg/dL", "Lab") # <--- ADDED
+        MedicalParameter("Cholesterol", get_float("Enter Cholesterol (mg/dL): "), "mg/dL", "Lab") 
     ]
 
     
@@ -95,3 +95,4 @@ def main():
 if __name__ == "__main__":
 
     main()
+
