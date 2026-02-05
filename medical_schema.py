@@ -4,16 +4,15 @@ from typing import Optional, List, Dict, Any
 from enum import Enum
 
 class SeverityColor(Enum):
-    PURPLE = "🟣"        # Extremely critical / life-threatening
-    RED = "🔴"           # Critical, immediate attention
-    YELLOW = "🟡"        # Suspicious, needs monitoring
-    LIGHT_YELLOW = "🟨"  # Slight deviation, lifestyle adjustment
-    WHITE = "⚪"         # Normal
-
+    PURPLE = "🟣"        
+    RED = "🔴"           
+    YELLOW = "🟡"        
+    LIGHT_YELLOW = "🟨"  
+    WHITE = "⚪"         
 @dataclass
 class PatientDemographics:
     age: int
-    gender: str  # 'Male' or 'Female'
+    gender: str  
     height_cm: float
     weight_kg: float
     
@@ -26,7 +25,7 @@ class MedicalParameter:
     name: str
     value: float
     unit: str
-    category: str  # e.g., "Vitals", "Lab", "Urine"
+    category: str  
 
 @dataclass
 class EvaluationResult:
@@ -34,7 +33,7 @@ class EvaluationResult:
     patient_value: float
     unit: str
     personalized_range: str
-    deviation_level: str  # e.g., "High", "Low", "Normal"
+    deviation_level: str  
     severity_color: str
     explanation: str
     influencing_factors: List[str]
@@ -49,3 +48,4 @@ class EvaluationResult:
             "Explanation Text": self.explanation,
             "Influencing Factors": self.influencing_factors
         }
+
