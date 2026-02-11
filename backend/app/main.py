@@ -1,0 +1,21 @@
+from fastapi import FastAPI
+from app.database import engine, Base
+from app.api import general, auth, users, medical_records, hospitals, medical
+from app.api import family_access as family_access_api
+
+# Import models so they register with Base
+from app.models import user, emergency_contact, medical_record, family_access 
+
+# Create tables
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="Chikitsa Cloud API")
+
+# Include routers
+app.include_router(general.router)
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(medical_records.router)
+app.include_router(medical.router)          # 🟢 NEW
+app.include_router(family_access_api.router)
+app.include_router(hospitals.router)
