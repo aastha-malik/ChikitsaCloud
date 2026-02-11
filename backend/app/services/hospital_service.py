@@ -114,8 +114,8 @@ async def search_nearby_hospitals(lat: float, lon: float, radius_km: int = 5) ->
             # Sort by nearest first
             hospitals.sort(key=lambda x: x["distance_km"])
             
-            # Return max 5 (Backend Controlled)
-            return hospitals[:5]
+            # Return max 10
+            return hospitals[:10]
             
     except (httpx.RequestError, httpx.TimeoutException):
         raise HTTPException(

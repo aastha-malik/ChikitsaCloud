@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from uuid import UUID
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 # --- Access Request Schemas ---
 class AccessRequestCreate(BaseModel):
@@ -18,6 +18,11 @@ class AccessRequestOut(BaseModel):
     created_at: datetime
     responded_at: Optional[datetime] = None
     
+    requester_name: Optional[str] = None
+    requester_email: Optional[str] = None
+    owner_name: Optional[str] = None
+    owner_email: Optional[str] = None
+
     class Config:
         from_attributes = True
 
@@ -28,6 +33,11 @@ class FamilyAccessOut(BaseModel):
     viewer_user_id: UUID
     can_view_medical_records: bool
     created_at: datetime
+    
+    owner_name: Optional[str] = None
+    owner_email: Optional[str] = None
+    viewer_name: Optional[str] = None
+    viewer_email: Optional[str] = None
     
     class Config:
         from_attributes = True

@@ -57,7 +57,15 @@ class AuthProvider extends ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
-      await _authRepository.verifyEmail(email, code);
+      final response = await _authRepository.verifyEmail(email, code);
+      final token = response.data['access_token'];
+      final userId = response.data['user_id'];
+
+      await _storage.write(key: 'auth_token', value: token);
+      await _storage.write(key: 'user_id', value: userId);
+
+      _userId = userId;
+      _isAuthenticated = true;
       _setLoading(false);
       return true;
     } on DioException catch (e) {
@@ -118,6 +126,30 @@ class AuthProvider extends ChangeNotifier {
       return true;
     } on DioException catch (e) {
       String errorMessage = 'Failed to resend code';
+      if (e.response?.data is Map) {
+        errorMessage = e.response?.data['detail'] ?? errorMessage;
+      } else if (e.response?.data is String) {
+        errorMessage = e.response?.data;
+      }
+      _setError(errorMessage);
+      _setLoading(false);
+      return false;
+    } catch (e) {
+      _setError('An unexpected error occurred');
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  Future<bool> deleteAccount() async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      await _authRepository.deleteAccount();
+      await logout();
+      return true;
+    } on DioException catch (e) {
+      String errorMessage = 'Failed to delete account';
       if (e.response?.data is Map) {
         errorMessage = e.response?.data['detail'] ?? errorMessage;
       } else if (e.response?.data is String) {

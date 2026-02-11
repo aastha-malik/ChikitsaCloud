@@ -5,77 +5,108 @@ from uuid import UUID
 
 from app.database import get_db
 from app.services import user_service
+from app.api.deps import get_current_user
+from app.models.user import AuthUser
 from app.schemas.user import (
     UserProfileCreate,
     UserProfileUpdate,
     UserProfileOut,
     EmergencyContactCreate,
-    EmergencyContactOut
+    EmergencyContactOut,
+    EmergencyContactUpdate,
+    ConsolidatedProfileOut,
+    UserProfileUpdateConsolidated
 )
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
-# -------------------------------
-# TEMP AUTH DEPENDENCY (NO JWT YET)
-# -------------------------------
-def get_current_user_id(user_id: UUID):
-    return user_id
-
-
-# -------- User Profile --------
-
-@router.post("/profile", response_model=UserProfileOut)
-def create_profile(
-    profile: UserProfileCreate,
-    user_id: UUID = Depends(get_current_user_id),
+@router.get("/search", response_model=UserProfileOut)
+def search_user_by_email(
+    email: str,
     db: Session = Depends(get_db)
 ):
-    return user_service.create_user_profile(db, user_id, profile)
-
-
-@router.get("/profile", response_model=UserProfileOut)
-def get_profile(
-    user_id: UUID = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
-):
-    profile = user_service.get_user_profile(db, user_id)
+    user = db.query(AuthUser).filter(AuthUser.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    profile = user_service.get_user_profile(db, user.id)
     if not profile:
-        raise HTTPException(status_code=404, detail="Profile not found")
+        # Return a shell profile if they have an account but no profile yet
+        return {"user_id": user.id, "name": email.split('@')[0]}
+    
     return profile
 
+# -------- Consolidated Profile --------
 
-@router.put("/profile", response_model=UserProfileOut)
-def update_profile(
-    profile: UserProfileUpdate,
-    user_id: UUID = Depends(get_current_user_id),
+@router.get("/profile", response_model=ConsolidatedProfileOut)
+def get_full_profile(
+    current_user: AuthUser = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return user_service.update_user_profile(db, user_id, profile)
+    profile = user_service.get_user_profile(db, current_user.id)
+    if not profile:
+        # Create an empty profile if none exists
+        profile = user_service.create_user_profile(db, current_user.id, UserProfileCreate(name=current_user.email.split('@')[0]))
+    
+    emergency_contacts = user_service.get_emergency_contacts(db, current_user.id)
+    
+    return {
+        "personal_details": profile,
+        "emergency_contacts": emergency_contacts,
+        "allergies": profile.allergies
+    }
 
+@router.put("/profile", response_model=ConsolidatedProfileOut)
+def update_full_profile(
+    update_data: UserProfileUpdateConsolidated,
+    current_user: AuthUser = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if update_data.personal_details:
+        user_service.update_user_profile(db, current_user.id, update_data.personal_details)
+    
+    if update_data.emergency_contact:
+        user_service.update_emergency_contact(db, current_user.id, update_data.emergency_contact)
+        
+    profile = user_service.get_user_profile(db, current_user.id)
+    emergency_contacts = user_service.get_emergency_contacts(db, current_user.id)
+    
+    return {
+        "personal_details": profile,
+        "emergency_contacts": emergency_contacts,
+        "allergies": profile.allergies
+    }
 
 # -------- Emergency Contacts --------
 
 @router.post("/emergency-contacts", response_model=EmergencyContactOut)
 def add_emergency_contact(
     contact: EmergencyContactCreate,
-    user_id: UUID = Depends(get_current_user_id),
+    current_user: AuthUser = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return user_service.create_emergency_contact(db, user_id, contact)
-
+    return user_service.create_emergency_contact(db, current_user.id, contact)
 
 @router.get("/emergency-contacts", response_model=List[EmergencyContactOut])
 def list_emergency_contacts(
-    user_id: UUID = Depends(get_current_user_id),
+    current_user: AuthUser = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return user_service.get_emergency_contacts(db, user_id)
+    return user_service.get_emergency_contacts(db, current_user.id)
 
+@router.put("/emergency-contacts/{contact_id}", response_model=EmergencyContactOut)
+def update_emergency_contact(
+    contact_id: UUID,
+    contact_data: EmergencyContactUpdate,
+    current_user: AuthUser = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return user_service.update_emergency_contact_by_id(db, current_user.id, contact_id, contact_data)
 
 @router.delete("/emergency-contacts/{contact_id}")
 def delete_emergency_contact(
     contact_id: UUID,
-    user_id: UUID = Depends(get_current_user_id),
+    current_user: AuthUser = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return user_service.delete_emergency_contact(db, user_id, contact_id)
+    return user_service.delete_emergency_contact(db, current_user.id, contact_id)

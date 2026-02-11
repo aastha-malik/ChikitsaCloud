@@ -1,10 +1,11 @@
 from pydantic import BaseModel
 from uuid import UUID
 from datetime import datetime
-from typing import List
+from typing import Optional, List
 
 class MedicalRecordBase(BaseModel):
-    record_category: str
+    title: str
+    record_type: str # lab_report, prescription, scan_image, discharge_summary, other
 
 class MedicalRecordCreate(MedicalRecordBase):
     pass
@@ -13,19 +14,8 @@ class MedicalRecordOut(MedicalRecordBase):
     id: UUID
     user_id: UUID
     file_path: str
-    file_type: str
-    original_filename: str
-    uploaded_at: datetime
-
-    class Config:
-        from_attributes = True
-
-class MedicalRecordList(BaseModel):
-    id: UUID
-    record_category: str
-    file_type: str
-    uploaded_at: datetime
-    original_filename: str
+    ai_insight: Optional[str] = None
+    created_at: datetime
 
     class Config:
         from_attributes = True

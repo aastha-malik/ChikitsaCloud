@@ -76,7 +76,12 @@ def verify_email(db: Session, data: VerifyEmail):
     
     db.commit()
     
-    return {"message": "Email verified successfully"}
+    return {
+        "message": "Email verified successfully",
+        "access_token": security.create_access_token(data={"sub": str(user.id)}),
+        "token_type": "bearer",
+        "user_id": str(user.id)
+    }
 
 def authenticate_user(db: Session, data: UserLogin):
     user = db.query(AuthUser).filter(AuthUser.email == data.email).first()
@@ -99,7 +104,7 @@ def authenticate_user(db: Session, data: UserLogin):
         
     return {
         "message": "Login successful",
-        "access_token": "dummy_token_123",
+        "access_token": security.create_access_token(data={"sub": str(user.id)}),
         "token_type": "bearer",
         "user_id": str(user.id)
     }
@@ -131,3 +136,28 @@ def resend_verification(db: Session, email: str):
         print(f"[CRITICAL] Backend failed to resend email. MANUAL CODE for {email} is: {code}")
         
     return {"message": "Verification code resent successfully"}
+
+def delete_user_account(db: Session, user_id: str):
+    user = db.query(AuthUser).filter(AuthUser.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # cascade="all, delete-orphan" in AuthUser model handles profile, contacts, and metadata deletion.
+    # We still need to delete physical medical files and handle family relations that might not cascade via ORM.
+    from app.services import storage_service
+    from app.models.family_access import FamilyInviteToken, FamilyAccessRequest, FamilyMedicalAccess
+    
+    storage_service.delete_user_storage(user.id)
+    
+    # Explicitly delete family related data where user is owner or viewer/requester
+    db.query(FamilyInviteToken).filter(FamilyInviteToken.owner_user_id == user.id).delete()
+    db.query(FamilyAccessRequest).filter(
+        (FamilyAccessRequest.owner_user_id == user.id) | (FamilyAccessRequest.requester_user_id == user.id)
+    ).delete()
+    db.query(FamilyMedicalAccess).filter(
+        (FamilyMedicalAccess.owner_user_id == user.id) | (FamilyMedicalAccess.viewer_user_id == user.id)
+    ).delete()
+    
+    db.delete(user)
+    db.commit()
+    return {"message": "Account deleted successfully"}

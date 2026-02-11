@@ -4,7 +4,12 @@ import '../widgets/quick_access_card.dart';
 import '../widgets/record_tile.dart';
 import '../presentation/providers/reports_provider.dart';
 import '../presentation/providers/auth_provider.dart';
+import '../presentation/providers/profile_provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'profile_screen.dart';
+import 'family_screen.dart';
+import 'records_screen.dart';
+import 'hospitals_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,7 +27,8 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = context.read<AuthProvider>();
       if (authProvider.userId != null) {
-        context.read<ReportsProvider>().fetchRecords(authProvider.userId!);
+        context.read<ReportsProvider>().fetchRecords();
+        context.read<ProfileProvider>().fetchProfile();
       }
     });
   }
@@ -40,8 +46,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (result != null && result.files.single.path != null) {
       final success = await reportsProvider.uploadRecord(
-        userId: authProvider.userId!,
-        category: 'General', // Default for now
+        title: result.files.single.name.split('.').first,
+        recordType: 'other',
         filePath: result.files.single.path!,
         fileName: result.files.single.name,
       );
@@ -62,86 +68,22 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final reportsProvider = context.watch<ReportsProvider>();
     final authProvider = context.watch<AuthProvider>();
+    final profileProvider = context.watch<ProfileProvider>();
+    final profile = profileProvider.profileData?['personal_details'];
+
+    final List<Widget> _bodies = [
+      _buildHomeContent(reportsProvider, authProvider, profile),
+      RecordsScreen(),
+      FamilyScreen(),
+      HospitalsScreen(),
+      const ProfileScreen(),
+    ];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(context, authProvider),
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionTitle('Quick Access'),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      QuickAccessCard(
-                        title: 'Upload Record',
-                        icon: Icons.note_add_outlined,
-                        iconColor: Colors.blue,
-                        onTap: _handleUpload,
-                      ),
-                      const SizedBox(width: 16),
-                      QuickAccessCard(
-                        title: 'Analyze Health',
-                        icon: Icons.analytics_outlined,
-                        iconColor: Colors.purple,
-                        onTap: () => Navigator.pushNamed(context, '/analysis'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildSectionTitle('Recent Records'),
-                      TextButton(
-                        onPressed: () {},
-                        child: const Text(
-                          'View All',
-                          style: TextStyle(color: Color(0xFF2A8B8B)),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  if (reportsProvider.isLoading)
-                    const Center(child: CircularProgressIndicator())
-                  else if (reportsProvider.errorMessage != null)
-                    Center(child: Text(reportsProvider.errorMessage!, style: const TextStyle(color: Colors.red)))
-                  else if (reportsProvider.records.isEmpty)
-                    const Center(child: Text('No records found'))
-                  else
-                    ...reportsProvider.records.map((record) => RecordTile(
-                          title: record['original_filename'] ?? 'Untitled',
-                          date: record['created_at']?.split('T')[0] ?? 'Unknown',
-                          type: record['record_category'] ?? 'General',
-                          onTap: () {},
-                        )),
-                  const SizedBox(height: 80), // Space for FAB
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-// ... rest of the file ...
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: const Color(0xFFEF4444),
-        shape: const CircleBorder(),
-        child: const Text(
-          'SOS',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _bodies,
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
@@ -161,7 +103,97 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, AuthProvider authProvider) {
+  Widget _buildHomeContent(ReportsProvider reportsProvider, AuthProvider authProvider, Map<String, dynamic>? profile) {
+    // Show max 3 latest records
+    final recentRecords = reportsProvider.records.take(3).toList();
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(context, authProvider, profile),
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionTitle('Quick Access'),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    QuickAccessCard(
+                      title: 'Upload Record',
+                      icon: Icons.note_add_outlined,
+                      iconColor: Colors.blue,
+                      onTap: _handleUpload,
+                    ),
+                    const SizedBox(width: 16),
+                    QuickAccessCard(
+                      title: 'Share Access',
+                      icon: Icons.share_location_outlined,
+                      iconColor: Colors.purple,
+                      onTap: () => setState(() => _selectedIndex = 2), // Switch to Family tab
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildSectionTitle('Recent Records'),
+                    TextButton(
+                      onPressed: () => setState(() => _selectedIndex = 1), // Switch to Records tab
+                      child: const Text(
+                        'View All',
+                        style: TextStyle(color: Color(0xFF2A8B8B)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (reportsProvider.isLoading && recentRecords.isEmpty)
+                  const Center(child: CircularProgressIndicator())
+                else if (reportsProvider.errorMessage != null && recentRecords.isEmpty)
+                  Center(child: Text(reportsProvider.errorMessage!, style: const TextStyle(color: Colors.red)))
+                else if (recentRecords.isEmpty)
+                  const Center(child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Text('No records found', style: TextStyle(color: Colors.grey)),
+                  ))
+                else
+                  ...recentRecords.map((record) => RecordTile(
+                        title: record['title'] ?? 'Untitled',
+                        date: record['created_at']?.split('T')[0] ?? 'Unknown',
+                        type: _formatType(record['record_type']),
+                        onTap: () {
+                          final ext = record['file_path'].split('.').last;
+                          reportsProvider.viewRecord(record['id'], "${record['title']}.$ext");
+                        },
+                      )),
+                const SizedBox(height: 80),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatType(String? type) {
+    if (type == null) return 'General';
+    return type.split('_').map((word) => word[0].toUpperCase() + word.substring(1)).join(' ');
+  }
+
+  Widget _buildPlaceholder(String title) {
+    return Center(child: Text('$title Screen Coming Soon'));
+  }
+
+  Widget _buildHeader(BuildContext context, AuthProvider authProvider, Map<String, dynamic>? profile) {
+    final String name = profile?['name'] ?? 'User';
+    final String age = _calculateAge(profile?['date_of_birth']);
+    final String height = profile?['height']?.toString() ?? '--';
+    final String weight = profile?['weight']?.toString() ?? '--';
+
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
       decoration: const BoxDecoration(
@@ -186,7 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    authProvider.userId != null ? 'User' : 'Guest', 
+                    name,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 28,
@@ -195,29 +227,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: Colors.white.withValues(alpha: 0.2),
-                child: const Text(
-                  'SJ',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ),
+              // SJ Icon removed as requested
             ],
           ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Text(
-              'ID: MED-8842-9901',
-              style: TextStyle(color: Colors.white, fontSize: 12),
-            ),
-          ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 30), // Increased space since ID tag is removed
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -225,26 +238,41 @@ class _HomeScreenState extends State<HomeScreen> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: Colors.black.withOpacity(0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
               ],
             ),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _InfoItem(label: 'Age', value: '36'),
-                _VerticalDivider(),
-                _InfoItem(label: 'Height', value: '165 cm'),
-                _VerticalDivider(),
-                _InfoItem(label: 'Weight', value: '62 kg'),
+                _InfoItem(label: 'Age', value: age),
+                const _VerticalDivider(),
+                _InfoItem(label: 'Height', value: height != '--' ? '$height cm' : '--'),
+                const _VerticalDivider(),
+                _InfoItem(label: 'Weight', value: weight != '--' ? '$weight kg' : '--'),
               ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  String _calculateAge(String? dobString) {
+    if (dobString == null) return '--';
+    try {
+      final dob = DateTime.parse(dobString);
+      final today = DateTime.now();
+      int age = today.year - dob.year;
+      if (today.month < dob.month || (today.month == dob.month && today.day < dob.day)) {
+        age--;
+      }
+      return age.toString();
+    } catch (e) {
+      return '--';
+    }
   }
 
   Widget _buildSectionTitle(String title) {

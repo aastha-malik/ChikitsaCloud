@@ -64,4 +64,12 @@ class AuthRepository {
       rethrow;
     }
   }
+
+  Future<void> deleteAccount() async {
+    try {
+      await _apiClient.dio.delete('/auth/account');
+    } on DioException catch (e) {
+      rethrow;
+    }
+  }
 }

@@ -6,55 +6,33 @@ class ReportsRepository {
 
   ReportsRepository(this._apiClient);
 
-  Future<Response> listRecords(String userId) async {
-    try {
-      final response = await _apiClient.dio.get(
-        '/medical-records/',
-        queryParameters: {
-          'requester_id': userId,
-          'owner_id': userId,
-        },
-      );
-      return response;
-    } on DioException catch (e) {
-      rethrow;
-    }
+  Future<Response> listRecords({String? ownerId}) async {
+    return await _apiClient.dio.get(
+      '/records',
+      queryParameters: ownerId != null ? {'owner_id': ownerId} : null,
+    );
   }
 
   Future<Response> uploadRecord({
-    required String userId,
-    required String category,
+    required String title,
+    required String recordType,
     required String filePath,
     required String fileName,
   }) async {
-    try {
-      final formData = FormData.fromMap({
-        'user_id': userId,
-        'record_category': category,
-        'file': await MultipartFile.fromFile(filePath, filename: fileName),
-      });
+    final formData = FormData.fromMap({
+      'title': title,
+      'record_type': recordType,
+      'file': await MultipartFile.fromFile(filePath, filename: fileName),
+    });
 
-      final response = await _apiClient.dio.post(
-        '/medical-records/upload',
-        data: formData,
-      );
-      return response;
-    } on DioException catch (e) {
-      rethrow;
-    }
+    return await _apiClient.dio.post('/records', data: formData);
   }
 
-  Future<Response> deleteRecord(String recordId, String userId) async {
-    try {
-      final response = await _apiClient.dio.delete(
-        '/medical-records/$recordId',
-        queryParameters: {
-          'requester_id': userId,
-        },
-      );
-      return response;
-    } on DioException catch (e) {
-      rethrow;
-    }
+  Future<Response> deleteRecord(String recordId) async {
+    return await _apiClient.dio.delete('/records/$recordId');
+  }
+
+  Future<void> downloadRecord(String recordId, String savePath) async {
+    await _apiClient.dio.download('/records/$recordId/file', savePath);
   }
 }

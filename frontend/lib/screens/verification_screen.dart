@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/primary_button.dart';
 import '../presentation/providers/auth_provider.dart';
+import '../routes/app_routes.dart';
 
 class VerificationScreen extends StatefulWidget {
   final String email;
@@ -34,9 +35,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Email verified successfully! Please login.')),
+          const SnackBar(content: Text('Email verified successfully!')),
         );
-        Navigator.pop(context); // Go back to login
+        Navigator.pushReplacementNamed(context, AppRoutes.userInfo);
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(authProvider.errorMessage ?? 'Verification failed')),
@@ -101,7 +102,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withOpacity(0.05),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),

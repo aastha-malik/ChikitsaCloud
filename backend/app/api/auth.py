@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.auth import UserSignup, VerifyEmail, UserLogin, ResendVerification
 from app.services import auth_service
+from app.api.deps import get_current_user
+from app.models.user import AuthUser
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -35,3 +37,13 @@ def resend_verification(data: ResendVerification, db: Session = Depends(get_db))
     Resend verification code to the user's email.
     """
     return auth_service.resend_verification(db, data.email)
+
+@router.delete("/account")
+def delete_account(
+    current_user: AuthUser = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Deletes the current user's account and all associated data.
+    """
+    return auth_service.delete_user_account(db, current_user.id)

@@ -36,11 +36,14 @@ class UserProfile(Base):
     
     name = Column(Text, nullable=False)
     date_of_birth = Column(Date, nullable=True)
-    gender = Column(String, nullable=True)
-    blood_group = Column(String, nullable=True)
-    
     phone_country_code = Column(String, nullable=True) # e.g. "+91"
     phone_number = Column(Numeric, nullable=True) # numeric as requested
+    
+    gender = Column(String, nullable=True)
+    blood_group = Column(String, nullable=True)
+    height = Column(Numeric, nullable=True)
+    weight = Column(Numeric, nullable=True)
+    country = Column(String, nullable=True)
     
     allergies = Column(ARRAY(String), default=[])
     

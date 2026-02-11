@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     
     # Email (Gmail SMTP)
     SMTP_EMAIL: str = "aasthamalik1810@gmail.com"
-    SMTP_PASSWORD: str = "chikitsa_cloud_password"
+    SMTP_PASSWORD: str = "wdkoqprjuebqjtcq"
     SMTP_SERVER: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
 

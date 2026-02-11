@@ -67,3 +67,43 @@ def delete_emergency_contact(db: Session, user_id: UUID, contact_id: UUID):
     db.delete(contact)
     db.commit()
     return {"message": "Emergency contact deleted successfully"}
+
+def update_emergency_contact(db: Session, user_id: UUID, contact_data):
+    # This might be deprecated soon if we use update_by_id
+    contact = db.query(EmergencyContact).filter(EmergencyContact.user_id == user_id).first()
+    
+    update_data = contact_data.model_dump(exclude_unset=True)
+    if not contact:
+        # Create new if none exists
+        contact = EmergencyContact(user_id=user_id, **update_data)
+        db.add(contact)
+    else:
+        # Update existing
+        for key, value in update_data.items():
+            setattr(contact, key, value)
+        db.add(contact)
+        
+    db.commit()
+    db.refresh(contact)
+    return contact
+
+def update_emergency_contact_by_id(db: Session, user_id: UUID, contact_id: UUID, contact_data):
+    contact = db.query(EmergencyContact).filter(
+        EmergencyContact.id == contact_id,
+        EmergencyContact.user_id == user_id
+    ).first()
+    
+    if not contact:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Contact not found or does not belong to user"
+        )
+        
+    update_data = contact_data.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(contact, key, value)
+        
+    db.add(contact)
+    db.commit()
+    db.refresh(contact)
+    return contact

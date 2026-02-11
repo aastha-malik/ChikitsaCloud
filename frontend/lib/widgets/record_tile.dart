@@ -6,6 +6,7 @@ class RecordTile extends StatelessWidget {
   final String type;
   final IconData icon;
   final VoidCallback onTap;
+  final VoidCallback? onDelete;
 
   const RecordTile({
     super.key,
@@ -14,6 +15,7 @@ class RecordTile extends StatelessWidget {
     required this.type,
     this.icon = Icons.description_outlined,
     required this.onTap,
+    this.onDelete,
   });
 
   @override
@@ -23,10 +25,10 @@ class RecordTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+        border: Border.all(color: Colors.grey.withOpacity(0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withOpacity(0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -61,10 +63,12 @@ class RecordTile extends StatelessWidget {
             ),
           ),
         ),
-        trailing: const Icon(
-          Icons.chevron_right,
-          color: Color(0xFFCBD5E1),
-        ),
+        trailing: onDelete != null 
+          ? IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+              onPressed: onDelete,
+            )
+          : const Icon(Icons.chevron_right, color: Color(0xFFCBD5E1)),
       ),
     );
   }
