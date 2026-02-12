@@ -127,25 +127,40 @@ def delete_user_storage(user_id: uuid.UUID):
 def get_signed_url(file_path: str, expires_in: int = 3600) -> str:
     """
     Generates a signed URL for a file in Supabase Storage.
+    Tries multiple bucket variants to find where the file is stored.
     """
-    try:
-        bucket_name = settings.SUPABASE_BUCKET
+    bucket_variants = [
+        settings.SUPABASE_BUCKET,
+        settings.SUPABASE_BUCKET.replace(" ", "-"),
+        "medical-records",
+        "medical records",
+        "medicalrecords"
+    ]
+    bucket_variants = list(dict.fromkeys(bucket_variants))
+
+    for bucket in bucket_variants:
         try:
-            response = supabase.storage.from_(bucket_name).create_signed_url(
+            print(f"[DEBUG] Attempting signed URL from bucket: '{bucket}'")
+            response = supabase.storage.from_(bucket).create_signed_url(
                 file_path, expires_in
             )
+            
+            # Handle different response formats
+            signed_url = None
+            if isinstance(response, str):
+                signed_url = response
+            elif isinstance(response, dict) and 'signedURL' in response:
+                signed_url = response['signedURL']
+            elif hasattr(response, 'signed_url'):
+                signed_url = response.signed_url
+            
+            if signed_url:
+                print(f"[SUCCESS] Generated signed URL from bucket: '{bucket}'")
+                return signed_url
+                
         except Exception as e:
-            if "Bucket not found" in str(e) and " " in bucket_name:
-                bucket_name = bucket_name.replace(" ", "-")
-                response = supabase.storage.from_(bucket_name).create_signed_url(
-                    file_path, expires_in
-                )
-            else:
-                raise e
+            if "Bucket not found" in str(e):
+                continue
+            print(f"[WARNING] Error with bucket '{bucket}': {e}")
 
-        if isinstance(response, dict) and 'signedURL' in response:
-            return response['signedURL']
-        return str(response)
-    except Exception as e:
-        print(f"Failed to generate signed URL for {file_path}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to generate file access URL")
+    raise HTTPException(status_code=404, detail="Could not retrieve file. Storage bucket not found.")
