@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.auth import UserSignup, VerifyEmail, UserLogin, ResendVerification
 from app.services import auth_service
 from app.api.deps import get_current_user
 from app.models.user import AuthUser
+from typing import Optional
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -24,12 +26,23 @@ def signup(user: UserSignup, db: Session = Depends(get_db)):
 #     return auth_service.verify_email(db, data)
 
 @router.post("/login")
-def login(data: UserLogin, db: Session = Depends(get_db)):
+def login(
+    data: Optional[UserLogin] = None, 
+    form_data: OAuth2PasswordRequestForm = Depends(), 
+    db: Session = Depends(get_db)
+):
     """
-    Login with email and password.
-    Returns a dummy token if successful.
+    Login with email and password. 
+    Supports both JSON body (for Mobile App) and Form Data (for Swagger UI Authorize).
     """
-    return auth_service.authenticate_user(db, data)
+    if data:
+        # Request came from Mobile App (JSON)
+        return auth_service.authenticate_user(db, data)
+    else:
+        # Request came from Swagger UI (Form Data)
+        # OAuth2PasswordRequestForm uses 'username' field, which we treat as 'email'
+        login_data = UserLogin(email=form_data.username, password=form_data.password)
+        return auth_service.authenticate_user(db, login_data)
 
 # @router.post("/resend-verification")
 # def resend_verification(data: ResendVerification, db: Session = Depends(get_db)):
