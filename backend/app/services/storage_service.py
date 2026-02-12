@@ -40,42 +40,47 @@ def save_medical_record_file(file: UploadFile, user_id: uuid.UUID) -> str:
         
         print(f"[DEBUG] Attempting upload to bucket: '{bucket_name}'")
         
-    # Helper to try different bucket IDs
-    bucket_variants = [
-        settings.SUPABASE_BUCKET,
-        settings.SUPABASE_BUCKET.replace(" ", "-"),
-        settings.SUPABASE_BUCKET.replace("-", " "),
-        "medical-records",
-        "medical records",
-        "medicalrecords"
-    ]
-    # Remove duplicates while preserving order
-    bucket_variants = list(dict.fromkeys(bucket_variants))
+        # Helper to try different bucket IDs
+        bucket_variants = [
+            settings.SUPABASE_BUCKET,
+            settings.SUPABASE_BUCKET.replace(" ", "-"),
+            settings.SUPABASE_BUCKET.replace("-", " "),
+            "medical-records",
+            "medical records",
+            "medicalrecords"
+        ]
+        # Remove duplicates while preserving order
+        bucket_variants = list(dict.fromkeys(bucket_variants))
 
-    last_error = None
-    for bucket in bucket_variants:
-        try:
-            print(f"[DEBUG] Attempting upload to bucket: '{bucket}'")
-            response = supabase.storage.from_(bucket).upload(
-                file_path,
-                file_content,
-                {"content-type": file.content_type}
-            )
-            print(f"[SUCCESS] Uploaded to bucket: '{bucket}'")
-            return file_path
-        except Exception as e:
-            last_error = e
-            if "Bucket not found" in str(e):
-                continue
-            else:
-                raise e
+        last_error = None
+        for bucket in bucket_variants:
+            try:
+                print(f"[DEBUG] Attempting upload to bucket: '{bucket}'")
+                response = supabase.storage.from_(bucket).upload(
+                    file_path,
+                    file_content,
+                    {"content-type": file.content_type}
+                )
+                print(f"[SUCCESS] Uploaded to bucket: '{bucket}'")
+                return file_path
+            except Exception as e:
+                last_error = e
+                if "Bucket not found" in str(e):
+                    continue
+                else:
+                    raise e
 
-    # If we get here, all variants failed
-    print(f"[CRITICAL] All bucket variants failed. Last error: {last_error}")
-    # Reset file pointer if needed
-    file.file.seek(0)
-    raise HTTPException(status_code=500, detail=f"Target Supabase bucket not found. Tried: {bucket_variants}")
-    
+        # If we get here, all variants failed
+        print(f"[CRITICAL] All bucket variants failed. Last error: {last_error}")
+        # Reset file pointer if needed
+        file.file.seek(0)
+        raise HTTPException(status_code=500, detail=f"Target Supabase bucket not found. Tried: {bucket_variants}")
+
+    except Exception as e:
+        print(f"Supabase Upload Error: {e}")
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         file.file.close()
 
