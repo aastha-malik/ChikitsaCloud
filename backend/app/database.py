@@ -1,12 +1,17 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# PostgreSQL connection URL
-SQLALCHEMY_DATABASE_URL = (
-    "postgresql://postgres:chikitsa_cloud_password@db.lpzrzjforpbfahvsyscz.supabase.co:5432/postgres"
-)
+from app.core.config import settings
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+# PostgreSQL connection URL
+SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
+
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    pool_pre_ping=True,
+    pool_size=20,
+    max_overflow=10
+)
 
 SessionLocal = sessionmaker(
     autocommit=False,

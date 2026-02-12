@@ -1,17 +1,22 @@
 from fastapi import FastAPI
+from app.core.config import settings
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import engine, Base
 from app.api import general, auth, users, medical_records, hospitals, medical
 from app.api import family_access as family_access_api
 
-# ... (models and table creation)
-Base.metadata.create_all(bind=engine)
+# Note: Use Alembic migrations for production schema management
+# from app.database import engine, Base
+# Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Chikitsa Cloud API")
+
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    debug=settings.DEBUG
+)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

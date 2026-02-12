@@ -1,4 +1,4 @@
-#!/home/asus/Desktop/Code/chikitsa_cloud/backend/venv/bin/python3
+#!/home/asus/Desktop/Code/ChikitsaCloud-main/backend/venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

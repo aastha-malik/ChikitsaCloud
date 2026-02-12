@@ -1,20 +1,34 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import List
 
 class Settings(BaseSettings):
-    # Database
-    DATABASE_URL: str = "postgresql://postgres:chikitsa_cloud_password@db.lpzrzjforpbfahvsyscz.supabase.co:5432/postgres"
-    
-    # Email (Gmail SMTP)
-    SMTP_EMAIL: str = "aasthamalik1810@gmail.com"
-    SMTP_PASSWORD: str = "wdkoqprjuebqjtcq"
-    SMTP_SERVER: str = "smtp.gmail.com"
-    SMTP_PORT: int = 587
-
     # App
-    SECRET_KEY: str = "changethis"
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    PROJECT_NAME: str = "Chikitsa Cloud API"
+    DEBUG: bool = False
+    
+    # Database
+    DATABASE_URL: str
+    
+    # Email (Generic SMTP)
+    SMTP_EMAIL: str
+    SMTP_PASSWORD: str
+    SMTP_SERVER: str 
+    SMTP_PORT: int
+    
+    # Auth
+    SECRET_KEY: str
+    ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    
+    
+    # Supabase (Storage & Auth)
+    SUPABASE_URL: str
+    SUPABASE_KEY: str
+    SUPABASE_BUCKET: str = "medical-records"
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    # CORS
+    BACKEND_CORS_ORIGINS: List[str] = ["*"]
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore", case_sensitive=True)
 
 settings = Settings()
