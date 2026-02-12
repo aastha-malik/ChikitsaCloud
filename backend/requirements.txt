@@ -8,6 +8,7 @@ email-validator
 psycopg2-binary
 python-jose[cryptography]
 passlib[bcrypt]
+bcrypt
 python-multipart
 httpx
 joblib

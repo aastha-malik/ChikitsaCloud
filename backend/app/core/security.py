@@ -1,12 +1,13 @@
+import bcrypt
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# We use bcrypt library directly because passlib is deprecated and has bugs
+# with newer bcrypt versions and Python 3.12+.
 
 
 def _truncate_bcrypt_bytes(password: str) -> bytes:
@@ -22,13 +23,23 @@ def _truncate_bcrypt_bytes(password: str) -> bytes:
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    # Passlib accepts bytes; we truncate at 72 bytes before verifying.
-    return pwd_context.verify(_truncate_bcrypt_bytes(plain_password), hashed_password)
+    if not hashed_password:
+        return False
+    try:
+        # bcrypt expects bytes for both password and hash
+        password_bytes = _truncate_bcrypt_bytes(plain_password)
+        hashed_bytes = hashed_password.encode("utf-8")
+        return bcrypt.checkpw(password_bytes, hashed_bytes)
+    except (ValueError, Exception):
+        return False
 
 
 def get_password_hash(password: str) -> str:
     # Truncate to 72 bytes before hashing to avoid backend errors.
-    return pwd_context.hash(_truncate_bcrypt_bytes(password))
+    password_bytes = _truncate_bcrypt_bytes(password)
+    # gensalt() defaults to 12 rounds, matching passlib's common default.
+    hashed_bytes = bcrypt.hashpw(password_bytes, bcrypt.gensalt())
+    return hashed_bytes.decode("utf-8")
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
