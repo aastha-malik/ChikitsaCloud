@@ -22,6 +22,6 @@ app.include_router(general.router)
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(medical_records.router)
-app.include_router(medical.router)          # 🟢 NEW
+app.include_router(medical.router)         
 app.include_router(family_access_api.router)
 app.include_router(hospitals.router)
