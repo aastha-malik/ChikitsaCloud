@@ -21,42 +21,30 @@ def validate_file(file: UploadFile):
         )
     return True
 
+def _get_bucket_variants():
+    variants = [
+        settings.SUPABASE_BUCKET,
+        settings.SUPABASE_BUCKET.replace(" ", "-"),
+        settings.SUPABASE_BUCKET.replace("-", " "),
+        "medical-records",
+        "medical records",
+        "medicalrecords"
+    ]
+    return list(dict.fromkeys(variants))
+
 def save_medical_record_file(file: UploadFile, user_id: uuid.UUID) -> str:
-    """
-    Saves file to Supabase Storage bucket.
-    Returns: Public URL or Path to file.
-    """
     validate_file(file)
-    
-    # Generate unique path: {user_id}/{uuid}_{filename}
     file_path = f"{user_id}/{uuid.uuid4()}_{file.filename}"
     
     try:
-        # Read file content
         file_content = file.file.read()
-        
-        # Determine bucket to use
-        bucket_name = settings.SUPABASE_BUCKET
-        
-        print(f"[DEBUG] Attempting upload to bucket: '{bucket_name}'")
-        
-        # Helper to try different bucket IDs
-        bucket_variants = [
-            settings.SUPABASE_BUCKET,
-            settings.SUPABASE_BUCKET.replace(" ", "-"),
-            settings.SUPABASE_BUCKET.replace("-", " "),
-            "medical-records",
-            "medical records",
-            "medicalrecords"
-        ]
-        # Remove duplicates while preserving order
-        bucket_variants = list(dict.fromkeys(bucket_variants))
-
+        bucket_variants = _get_bucket_variants()
         last_error = None
+
         for bucket in bucket_variants:
             try:
                 print(f"[DEBUG] Attempting upload to bucket: '{bucket}'")
-                response = supabase.storage.from_(bucket).upload(
+                supabase.storage.from_(bucket).upload(
                     file_path,
                     file_content,
                     {"content-type": file.content_type}
@@ -67,77 +55,43 @@ def save_medical_record_file(file: UploadFile, user_id: uuid.UUID) -> str:
                 last_error = e
                 if "Bucket not found" in str(e):
                     continue
-                else:
-                    raise e
+                raise e
 
-        # If we get here, all variants failed
-        print(f"[CRITICAL] All bucket variants failed. Last error: {last_error}")
-        # Reset file pointer if needed
+        print(f"[CRITICAL] All bucket variants failed for upload. Last error: {last_error}")
         file.file.seek(0)
         raise HTTPException(status_code=500, detail=f"Target Supabase bucket not found. Tried: {bucket_variants}")
 
     except Exception as e:
         print(f"Supabase Upload Error: {e}")
-        if isinstance(e, HTTPException):
-            raise e
+        if isinstance(e, HTTPException): raise e
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         file.file.close()
 
 def delete_physical_file(relative_path: str):
-    """
-    Deletes file from Supabase Storage.
-    relative_path is the path in the bucket.
-    """
-    try:
-        bucket_name = settings.SUPABASE_BUCKET
+    bucket_variants = _get_bucket_variants()
+    for bucket in bucket_variants:
         try:
-            supabase.storage.from_(bucket_name).remove([relative_path])
+            supabase.storage.from_(bucket).remove([relative_path])
+            return
         except Exception as e:
-            if "Bucket not found" in str(e) and " " in bucket_name:
-                supabase.storage.from_(bucket_name.replace(" ", "-")).remove([relative_path])
-            else:
-                raise e
-    except Exception as e:
-        print(f"Failed to delete file {relative_path}: {e}")
+            if "not found" in str(e).lower():
+                continue
+            print(f"Failed to delete file {relative_path} from {bucket}: {e}")
 
 def delete_user_storage(user_id: uuid.UUID):
-    """
-    Deletes all files for a user.
-    """
-    try:
-        bucket_name = settings.SUPABASE_BUCKET
+    bucket_variants = _get_bucket_variants()
+    for bucket in bucket_variants:
         try:
-            files = supabase.storage.from_(bucket_name).list(f"{user_id}")
+            files = supabase.storage.from_(bucket).list(f"{user_id}")
+            if files:
+                paths_to_delete = [f"{user_id}/{f['name']}" for f in files]
+                supabase.storage.from_(bucket).remove(paths_to_delete)
         except Exception as e:
-            if "Bucket not found" in str(e) and " " in bucket_name:
-                bucket_name = bucket_name.replace(" ", "-")
-                files = supabase.storage.from_(bucket_name).list(f"{user_id}")
-            else:
-                raise e
-        
-        if files:
-            paths_to_delete = [f"{user_id}/{f['name']}" for f in files]
-            if paths_to_delete:
-                supabase.storage.from_(bucket_name).remove(paths_to_delete)
-                
-    except Exception as e:
-        print(f"Failed to delete storage for user {user_id}: {e}")
+            continue
 
 def get_signed_url(file_path: str, expires_in: int = 3600) -> str:
-    """
-    Generates a signed URL for a file in Supabase Storage.
-    Tries multiple bucket variants to find where the file is stored.
-    """
-    bucket_variants = [
-        settings.SUPABASE_BUCKET,
-        settings.SUPABASE_BUCKET.replace(" ", "-"),
-        "medical-records",
-        "medical records",
-        "medicalrecords"
-    ]
-    bucket_variants = list(dict.fromkeys(bucket_variants))
-
+    bucket_variants = _get_bucket_variants()
     for bucket in bucket_variants:
         try:
             print(f"[DEBUG] Attempting signed URL from bucket: '{bucket}'")
@@ -145,7 +99,6 @@ def get_signed_url(file_path: str, expires_in: int = 3600) -> str:
                 file_path, expires_in
             )
             
-            # Handle different response formats
             signed_url = None
             if isinstance(response, str):
                 signed_url = response
@@ -159,8 +112,8 @@ def get_signed_url(file_path: str, expires_in: int = 3600) -> str:
                 return signed_url
                 
         except Exception as e:
-            if "Bucket not found" in str(e):
+            if "not found" in str(e).lower():
                 continue
             print(f"[WARNING] Error with bucket '{bucket}': {e}")
 
-    raise HTTPException(status_code=404, detail="Could not retrieve file. Storage bucket not found.")
+    raise HTTPException(status_code=404, detail="Medical record file not found in any storage bucket.")

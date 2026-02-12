@@ -46,6 +46,16 @@ async def get_record_file(
     current_user: AuthUser = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # record_service now returns (record, signed_url)
+    # Sends a 302 Found redirect to the signed URL
     record, signed_url = medical_record_service.get_record_file(db, current_user.id, record_id)
-    return RedirectResponse(url=signed_url)
+    return RedirectResponse(url=signed_url, status_code=302)
+
+@router.get("/{record_id}/url")
+async def get_record_url(
+    record_id: UUID,
+    current_user: AuthUser = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Returns the signed URL as JSON (useful for mobile apps that want to handle the URL directly)
+    record, signed_url = medical_record_service.get_record_file(db, current_user.id, record_id)
+    return {"url": signed_url}
