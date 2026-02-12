@@ -35,13 +35,29 @@ def save_medical_record_file(file: UploadFile, user_id: uuid.UUID) -> str:
         # Read file content
         file_content = file.file.read()
         
-        # Upload to Supabase Storage
-        # https://supabase.com/docs/reference/python/storage-from-upload
-        response = supabase.storage.from_(settings.SUPABASE_BUCKET).upload(
-            file_path,
-            file_content,
-            {"content-type": file.content_type}
-        )
+        # Determine bucket to use
+        bucket_name = settings.SUPABASE_BUCKET
+        
+        print(f"[DEBUG] Attempting upload to bucket: '{bucket_name}'")
+        
+        try:
+            # Upload to Supabase Storage
+            response = supabase.storage.from_(bucket_name).upload(
+                file_path,
+                file_content,
+                {"content-type": file.content_type}
+            )
+        except Exception as e:
+            if "Bucket not found" in str(e) and " " in bucket_name:
+                fallback_bucket = bucket_name.replace(" ", "-")
+                print(f"[INFO] Bucket '{bucket_name}' not found. Trying fallback: '{fallback_bucket}'")
+                response = supabase.storage.from_(fallback_bucket).upload(
+                    file_path,
+                    file_content,
+                    {"content-type": file.content_type}
+                )
+            else:
+                raise e
         
         # If response implies failure (depends on version, usually throws error or returns dict)
         # Assuming success if no exception raised.
@@ -62,25 +78,36 @@ def delete_physical_file(relative_path: str):
     relative_path is the path in the bucket.
     """
     try:
-        supabase.storage.from_(settings.SUPABASE_BUCKET).remove([relative_path])
+        bucket_name = settings.SUPABASE_BUCKET
+        try:
+            supabase.storage.from_(bucket_name).remove([relative_path])
+        except Exception as e:
+            if "Bucket not found" in str(e) and " " in bucket_name:
+                supabase.storage.from_(bucket_name.replace(" ", "-")).remove([relative_path])
+            else:
+                raise e
     except Exception as e:
         print(f"Failed to delete file {relative_path}: {e}")
 
 def delete_user_storage(user_id: uuid.UUID):
     """
     Deletes all files for a user.
-    Note: Supabase Storage folder deletion is tricky. 
-    We list files in the user's 'folder' and delete them.
     """
     try:
-        # List files in the user 'folder' (prefix)
-        # Note: 'list' might return nothing if folder doesn't strictly exist as an object
-        files = supabase.storage.from_(settings.SUPABASE_BUCKET).list(f"{user_id}")
+        bucket_name = settings.SUPABASE_BUCKET
+        try:
+            files = supabase.storage.from_(bucket_name).list(f"{user_id}")
+        except Exception as e:
+            if "Bucket not found" in str(e) and " " in bucket_name:
+                bucket_name = bucket_name.replace(" ", "-")
+                files = supabase.storage.from_(bucket_name).list(f"{user_id}")
+            else:
+                raise e
         
         if files:
             paths_to_delete = [f"{user_id}/{f['name']}" for f in files]
             if paths_to_delete:
-                supabase.storage.from_(settings.SUPABASE_BUCKET).remove(paths_to_delete)
+                supabase.storage.from_(bucket_name).remove(paths_to_delete)
                 
     except Exception as e:
         print(f"Failed to delete storage for user {user_id}: {e}")
@@ -88,17 +115,24 @@ def delete_user_storage(user_id: uuid.UUID):
 def get_signed_url(file_path: str, expires_in: int = 3600) -> str:
     """
     Generates a signed URL for a file in Supabase Storage.
-    Default expiry: 1 hour.
     """
     try:
-        response = supabase.storage.from_(settings.SUPABASE_BUCKET).create_signed_url(
-            file_path, expires_in
-        )
-        # response is a dict with 'signedURL'
+        bucket_name = settings.SUPABASE_BUCKET
+        try:
+            response = supabase.storage.from_(bucket_name).create_signed_url(
+                file_path, expires_in
+            )
+        except Exception as e:
+            if "Bucket not found" in str(e) and " " in bucket_name:
+                bucket_name = bucket_name.replace(" ", "-")
+                response = supabase.storage.from_(bucket_name).create_signed_url(
+                    file_path, expires_in
+                )
+            else:
+                raise e
+
         if isinstance(response, dict) and 'signedURL' in response:
             return response['signedURL']
-        elif hasattr(response, 'signed_url'): # Depends on sdk version
-            return response.signed_url
         return str(response)
     except Exception as e:
         print(f"Failed to generate signed URL for {file_path}: {e}")
