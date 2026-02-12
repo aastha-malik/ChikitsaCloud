@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiClient {
-  static const String baseUrl = 'http://localhost:8000'; // Success on Linux Desktop
+  static const String baseUrl = 'https://chikitsacloud-pn0c.onrender.com';
   
   final Dio _dio;
   final FlutterSecureStorage _storage;
