@@ -31,9 +31,11 @@ class MLHealthRiskModel:
             'systolic_bp','diastolic_bp','glucose','cholesterol'
         ])
 
-        prediction = self.model.predict(features_df)[0]
-        return int(prediction)
-
+        try:
+            prediction = self.model.predict(features_df)[0]
+            return int(prediction)
+        except Exception as e:
+            raise ValueError(f"Prediction failed: {str(e)}")
 
 
 ml_model_instance = MLHealthRiskModel()
