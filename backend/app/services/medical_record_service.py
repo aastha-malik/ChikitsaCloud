@@ -67,8 +67,6 @@ def get_record_file(db: Session, requester_id: UUID, record_id: UUID):
     if record.user_id != requester_id:
         family_access_service.enforce_medical_record_access(db, requester_id, record.user_id)
     
-    abs_path = storage_service.PROJECT_ROOT / record.file_path
-    if not abs_path.exists():
-        raise HTTPException(status_code=404, detail="Physical file not found")
-        
-    return record, abs_path
+    # Get signed URL from cloud storage instead of local file
+    signed_url = storage_service.get_signed_url(record.file_path)
+    return record, signed_url

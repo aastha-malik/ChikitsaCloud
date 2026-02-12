@@ -84,3 +84,22 @@ def delete_user_storage(user_id: uuid.UUID):
                 
     except Exception as e:
         print(f"Failed to delete storage for user {user_id}: {e}")
+
+def get_signed_url(file_path: str, expires_in: int = 3600) -> str:
+    """
+    Generates a signed URL for a file in Supabase Storage.
+    Default expiry: 1 hour.
+    """
+    try:
+        response = supabase.storage.from_(settings.SUPABASE_BUCKET).create_signed_url(
+            file_path, expires_in
+        )
+        # response is a dict with 'signedURL'
+        if isinstance(response, dict) and 'signedURL' in response:
+            return response['signedURL']
+        elif hasattr(response, 'signed_url'): # Depends on sdk version
+            return response.signed_url
+        return str(response)
+    except Exception as e:
+        print(f"Failed to generate signed URL for {file_path}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate file access URL")

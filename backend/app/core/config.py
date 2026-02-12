@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     # Supabase (Storage & Auth)
     SUPABASE_URL: str
     SUPABASE_KEY: str
-    SUPABASE_BUCKET: str = "medical-records"
+    SUPABASE_BUCKET: str = "medical records"
 
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = ["*"]

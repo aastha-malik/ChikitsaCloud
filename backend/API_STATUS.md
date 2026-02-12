@@ -57,9 +57,10 @@
 - Environment variable based config
 
 ### 📁 File Storage
-- Medical records stored outside backend folder
-- Path: `medical_storage/medical_records/{user_id}/`
-- Cloud migration ready
+- Medical records stored in Supabase Cloud Storage
+- Bucket: `medical records`
+- Path: `{user_id}/{uuid}_{filename}`
+- Securely served via Signed URLs (1 hour expiry)
 
 ### 👨‍👩‍👧‍👦 Family Access
 - Request-based access (no automatic grants)

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../screens/login_screen.dart';
 import '../screens/home_screen.dart';
-import '../screens/verification_screen.dart';
+// import '../screens/verification_screen.dart';
 import '../screens/analysis_screen.dart';
 import '../screens/user_info_screen.dart';
 

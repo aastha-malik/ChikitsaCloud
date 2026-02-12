@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from uuid import UUID
@@ -46,6 +46,6 @@ async def get_record_file(
     current_user: AuthUser = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    record, abs_path = medical_record_service.get_record_file(db, current_user.id, record_id)
-    filename = f"{record.title}{abs_path.suffix}"
-    return FileResponse(path=abs_path, filename=filename)
+    # record_service now returns (record, signed_url)
+    record, signed_url = medical_record_service.get_record_file(db, current_user.id, record_id)
+    return RedirectResponse(url=signed_url)
