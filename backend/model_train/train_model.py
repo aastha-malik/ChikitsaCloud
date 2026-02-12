@@ -5,7 +5,7 @@ from sklearn.ensemble import RandomForestClassifier
 import joblib
 
 
-data = pd.read_csv(r'C:\Users\asus\Desktop\AB\chikitsacloud_synthetic_medical_data.csv')
+data = pd.read_csv("chikitsacloud_synthetic_medical_data.csv")
 
 
 X = data[['age', 'gender', 'height_cm', 'weight_kg', 'bmi', 
@@ -25,4 +25,5 @@ model.fit(X, y)
 joblib.dump(model, "chikitsacloud_risk_model.pkl")
 
 print("✅ Model saved as 'chikitsacloud_risk_model.pkl'")
+
 
