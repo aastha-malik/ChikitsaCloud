@@ -4,6 +4,7 @@ sqlalchemy
 alembic
 pydantic
 pydantic-settings
+email-validator
 psycopg2-binary
 python-jose[cryptography]
 passlib[bcrypt]
