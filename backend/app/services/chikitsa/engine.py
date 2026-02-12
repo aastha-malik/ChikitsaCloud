@@ -1,3 +1,5 @@
+from app.ML.ml_model import ml_model_instance
+
 def run_chikitsa_engine(data: dict):
     """
     Evaluates patient medical data and returns health risks and flags.
@@ -66,6 +68,33 @@ def run_chikitsa_engine(data: dict):
         })
         risk_score += 1
 
+    # 6. ML Risk Prediction
+    try:
+        class TempPatient:
+            def __init__(self, data):
+                self.age = data.get("age")
+                self.gender = data.get("gender")
+                self.height_cm = data.get("height")
+                self.weight_kg = data.get("weight")
+                self.bmi = (
+                    data.get("weight") / ((data.get("height") / 100) ** 2)
+                    if data.get("height") else 0
+                )
+
+        patient_obj = TempPatient(data)
+
+        ml_values = {
+            "Systolic BP": data.get("bp_systolic"),
+            "Diastolic BP": data.get("bp_diastolic"),
+            "Blood Sugar (Fasting)": data.get("blood_sugar"),
+            "Cholesterol": data.get("cholesterol")
+        }
+
+        ml_prediction = ml_model_instance.predict(patient_obj, ml_values)
+
+    except Exception as e:
+        ml_prediction = None
+
     # Overall Risk Assessment
     if risk_score == 0:
         risk_level = "Low"
@@ -78,6 +107,7 @@ def run_chikitsa_engine(data: dict):
 
     return {
         "overall_health_risk": risk_level,
+        "ml_risk_prediction": ml_prediction,
         "flagged_parameters": flags,
         "summary": f"Analysis complete for {data.get('name', 'Patient')}. {len(flags)} parameter(s) flagged."
     }
