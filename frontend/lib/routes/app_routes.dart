@@ -15,10 +15,10 @@ class AppRoutes {
   static Map<String, WidgetBuilder> get routes => {
         login: (context) => const LoginScreen(),
         home: (context) => const HomeScreen(),
-        verify: (context) {
-          final email = ModalRoute.of(context)!.settings.arguments as String;
-          return VerificationScreen(email: email);
-        },
+        // verify: (context) {
+        //   final email = ModalRoute.of(context)!.settings.arguments as String;
+        //   return VerificationScreen(email: email);
+        // },
         analysis: (context) => const AnalysisScreen(),
         userInfo: (context) => const UserInfoScreen(),
       };

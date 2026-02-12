@@ -33,7 +33,19 @@ class AuthProvider extends ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
-      await _authRepository.signup(email, password);
+      final response = await _authRepository.signup(email, password);
+      
+      // Backend now returns access_token and user_id on signup to bypass verification
+      final token = response.data['access_token'];
+      final userId = response.data['user_id'];
+      
+      if (token != null && userId != null) {
+        await _storage.write(key: 'auth_token', value: token);
+        await _storage.write(key: 'user_id', value: userId);
+        _userId = userId;
+        _isAuthenticated = true;
+      }
+      
       _setLoading(false);
       return true;
     } on DioException catch (e) {
@@ -53,37 +65,37 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> verifyEmail(String email, String code) async {
-    _setLoading(true);
-    _setError(null);
-    try {
-      final response = await _authRepository.verifyEmail(email, code);
-      final token = response.data['access_token'];
-      final userId = response.data['user_id'];
-
-      await _storage.write(key: 'auth_token', value: token);
-      await _storage.write(key: 'user_id', value: userId);
-
-      _userId = userId;
-      _isAuthenticated = true;
-      _setLoading(false);
-      return true;
-    } on DioException catch (e) {
-      String errorMessage = 'Verification failed';
-      if (e.response?.data is Map) {
-        errorMessage = e.response?.data['detail'] ?? errorMessage;
-      } else if (e.response?.data is String) {
-        errorMessage = e.response?.data;
-      }
-      _setError(errorMessage);
-      _setLoading(false);
-      return false;
-    } catch (e) {
-      _setError('An unexpected error occurred');
-      _setLoading(false);
-      return false;
-    }
-  }
+  // Future<bool> verifyEmail(String email, String code) async {
+  //   _setLoading(true);
+  //   _setError(null);
+  //   try {
+  //     final response = await _authRepository.verifyEmail(email, code);
+  //     final token = response.data['access_token'];
+  //     final userId = response.data['user_id'];
+  // 
+  //     await _storage.write(key: 'auth_token', value: token);
+  //     await _storage.write(key: 'user_id', value: userId);
+  // 
+  //     _userId = userId;
+  //     _isAuthenticated = true;
+  //     _setLoading(false);
+  //     return true;
+  //   } on DioException catch (e) {
+  //     String errorMessage = 'Verification failed';
+  //     if (e.response?.data is Map) {
+  //       errorMessage = e.response?.data['detail'] ?? errorMessage;
+  //     } else if (e.response?.data is String) {
+  //       errorMessage = e.response?.data;
+  //     }
+  //     _setError(errorMessage);
+  //     _setLoading(false);
+  //     return false;
+  //   } catch (e) {
+  //     _setError('An unexpected error occurred');
+  //     _setLoading(false);
+  //     return false;
+  //   }
+  // }
 
   Future<bool> login(String email, String password) async {
     _setLoading(true);
@@ -117,29 +129,29 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> resendVerification(String email) async {
-    _setLoading(true);
-    _setError(null);
-    try {
-      await _authRepository.resendVerification(email);
-      _setLoading(false);
-      return true;
-    } on DioException catch (e) {
-      String errorMessage = 'Failed to resend code';
-      if (e.response?.data is Map) {
-        errorMessage = e.response?.data['detail'] ?? errorMessage;
-      } else if (e.response?.data is String) {
-        errorMessage = e.response?.data;
-      }
-      _setError(errorMessage);
-      _setLoading(false);
-      return false;
-    } catch (e) {
-      _setError('An unexpected error occurred');
-      _setLoading(false);
-      return false;
-    }
-  }
+  // Future<bool> resendVerification(String email) async {
+  //   _setLoading(true);
+  //   _setError(null);
+  //   try {
+  //     await _authRepository.resendVerification(email);
+  //     _setLoading(false);
+  //     return true;
+  //   } on DioException catch (e) {
+  //     String errorMessage = 'Failed to resend code';
+  //     if (e.response?.data is Map) {
+  //       errorMessage = e.response?.data['detail'] ?? errorMessage;
+  //     } else if (e.response?.data is String) {
+  //       errorMessage = e.response?.data;
+  //     }
+  //     _setError(errorMessage);
+  //     _setLoading(false);
+  //     return false;
+  //   } catch (e) {
+  //     _setError('An unexpected error occurred');
+  //     _setLoading(false);
+  //     return false;
+  //   }
+  // }
 
   Future<bool> deleteAccount() async {
     _setLoading(true);

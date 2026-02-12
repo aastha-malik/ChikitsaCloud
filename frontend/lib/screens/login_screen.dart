@@ -53,7 +53,8 @@ class _LoginScreenState extends State<LoginScreen> {
         if (isLogin) {
           Navigator.pushReplacementNamed(context, AppRoutes.home);
         } else {
-          Navigator.pushNamed(context, AppRoutes.verify, arguments: email);
+          // Bypass verification screen and go direct to profile setup
+          Navigator.pushReplacementNamed(context, AppRoutes.userInfo);
         }
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

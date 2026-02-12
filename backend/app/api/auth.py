@@ -16,12 +16,12 @@ def signup(user: UserSignup, db: Session = Depends(get_db)):
     """
     return auth_service.create_user(db, user)
 
-@router.post("/verify-email")
-def verify_email(data: VerifyEmail, db: Session = Depends(get_db)):
-    """
-    Verify use email using the code sent during signup.
-    """
-    return auth_service.verify_email(db, data)
+# @router.post("/verify-email")
+# def verify_email(data: VerifyEmail, db: Session = Depends(get_db)):
+#     """
+#     Verify use email using the code sent during signup.
+#     """
+#     return auth_service.verify_email(db, data)
 
 @router.post("/login")
 def login(data: UserLogin, db: Session = Depends(get_db)):
@@ -31,12 +31,12 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
     """
     return auth_service.authenticate_user(db, data)
 
-@router.post("/resend-verification")
-def resend_verification(data: ResendVerification, db: Session = Depends(get_db)):
-    """
-    Resend verification code to the user's email.
-    """
-    return auth_service.resend_verification(db, data.email)
+# @router.post("/resend-verification")
+# def resend_verification(data: ResendVerification, db: Session = Depends(get_db)):
+#     """
+#     Resend verification code to the user's email.
+#     """
+#     return auth_service.resend_verification(db, data.email)
 
 @router.delete("/account")
 def delete_account(
