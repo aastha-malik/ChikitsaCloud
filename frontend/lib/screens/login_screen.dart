@@ -107,13 +107,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      child: const Icon(
-                        Icons.push_pin,
-                        color: AppTheme.primaryColor,
-                        size: 24,
+                      child: Image.asset(
+                        'assets/logo.png',
+                        width: 48,
+                        height: 48,
                       ),
                     ),
                     const SizedBox(height: 16),

@@ -253,6 +253,17 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         elevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: AppTheme.textPrimary,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Image.asset(
+              'assets/logo.png',
+              width: 28,
+              height: 28,
+              color: AppTheme.primaryColor,
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),

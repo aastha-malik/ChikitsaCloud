@@ -6,7 +6,7 @@
     <application
         android:label="chikitsa_cloud"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/launcher_icon"
         android:usesCleartextTraffic="false">
         <activity
             android:name=".MainActivity"

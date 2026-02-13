@@ -243,7 +243,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              // SJ Icon removed as requested
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Image.asset(
+                  'assets/logo.png',
+                  width: 32,
+                  height: 32,
+                  color: Colors.white,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 30), // Increased space since ID tag is removed
