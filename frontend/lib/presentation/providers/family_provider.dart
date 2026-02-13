@@ -82,12 +82,17 @@ class FamilyProvider with ChangeNotifier {
     }
   }
 
+  Map<String, dynamic>? _lastRedeemResult;
+  Map<String, dynamic>? get lastRedeemResult => _lastRedeemResult;
+
   Future<bool> redeemInvite(String token) async {
     _isLoading = true;
     _errorMessage = null;
+    _lastRedeemResult = null;
     notifyListeners();
     try {
-      await _apiClient.dio.post('/family-access/redeem-invite', data: {'invite_token': token});
+      final response = await _apiClient.dio.post('/family-access/redeem-invite', data: {'invite_token': token});
+      _lastRedeemResult = response.data;
       await fetchRequests();
       return true;
     } on DioException catch (e) {
