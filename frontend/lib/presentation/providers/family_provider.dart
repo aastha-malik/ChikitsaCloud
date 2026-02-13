@@ -23,7 +23,11 @@ class FamilyProvider with ChangeNotifier {
   List<dynamic> _sharedWithMe = [];
   List<dynamic> get sharedWithMe => _sharedWithMe;
 
+  bool _isFetching = false;
+
   Future<void> fetchQRData() async {
+    if (_isFetching) return;
+    _isFetching = true;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -34,26 +38,31 @@ class FamilyProvider with ChangeNotifier {
     } catch (e) {
       _errorMessage = "Failed to load QR: $e";
     } finally {
+      _isFetching = false;
       _isLoading = false;
       notifyListeners();
     }
   }
 
   Future<void> fetchRequests() async {
+    if (_isFetching) return;
+    _isFetching = true;
     _isLoading = true;
     notifyListeners();
     try {
-      final pending = await _apiClient.dio.get('/family-access/pending-requests');
-      _pendingRequests = pending.data;
+      final responses = await Future.wait([
+        _apiClient.dio.get('/family-access/pending-requests'),
+        _apiClient.dio.get('/family-access/active-access'),
+        _apiClient.dio.get('/family-access/shared-with-me'),
+      ]);
       
-      final active = await _apiClient.dio.get('/family-access/active-access');
-      _activeAccess = active.data;
-
-      final shared = await _apiClient.dio.get('/family-access/shared-with-me');
-      _sharedWithMe = shared.data;
+      _pendingRequests = responses[0].data;
+      _activeAccess = responses[1].data;
+      _sharedWithMe = responses[2].data;
     } catch (e) {
       _errorMessage = "Failed to fetch requests: $e";
     } finally {
+      _isFetching = false;
       _isLoading = false;
       notifyListeners();
     }
@@ -85,9 +94,11 @@ class FamilyProvider with ChangeNotifier {
   Map<String, dynamic>? _lastRedeemResult;
   Map<String, dynamic>? get lastRedeemResult => _lastRedeemResult;
 
+  bool _isRedeeming = false;
+
   Future<bool> redeemInvite(String token) async {
-    if (_isLoading) return false; // Safety lock: ignore second call if first is still running
-    
+    if (_isRedeeming) return false;
+    _isRedeeming = true;
     _isLoading = true;
     _errorMessage = null;
     _lastRedeemResult = null;
@@ -95,7 +106,8 @@ class FamilyProvider with ChangeNotifier {
     try {
       final response = await _apiClient.dio.post('/family-access/redeem-invite', data: {'invite_token': token});
       _lastRedeemResult = response.data;
-      await fetchRequests();
+      // Use internal fetch to avoid lock conflicts
+      await _internalFetchRequests();
       return true;
     } on DioException catch (e) {
       final data = e.response?.data;
@@ -105,9 +117,23 @@ class FamilyProvider with ChangeNotifier {
       _errorMessage = 'An unexpected error occurred';
       return false;
     } finally {
+      _isRedeeming = false;
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> _internalFetchRequests() async {
+    try {
+      final responses = await Future.wait([
+        _apiClient.dio.get('/family-access/pending-requests'),
+        _apiClient.dio.get('/family-access/active-access'),
+        _apiClient.dio.get('/family-access/shared-with-me'),
+      ]);
+      _pendingRequests = responses[0].data;
+      _activeAccess = responses[1].data;
+      _sharedWithMe = responses[2].data;
+    } catch (_) {}
   }
 
   Future<bool> revokeAccess(String viewerId) async {

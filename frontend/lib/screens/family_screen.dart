@@ -121,8 +121,10 @@ class _FamilyScreenState extends State<FamilyScreen> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: _openScanner,
-                  icon: const Icon(Icons.camera_alt_outlined),
+                  onPressed: _isScanningUI ? null : _openScanner,
+                  icon: _isScanningUI 
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.camera_alt_outlined),
                   label: const Text('Scan QR'),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -193,13 +195,19 @@ class _FamilyScreenState extends State<FamilyScreen> {
     );
   }
 
+  bool _isScanningUI = false;
+
   void _openScanner() {
+    if (_isScanningUI) return;
+    setState(() => _isScanningUI = true);
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => const QRScannerPage(),
       ),
     ).then((token) async {
+      setState(() => _isScanningUI = false);
       if (token != null && token is String) {
         final provider = context.read<FamilyProvider>();
         final success = await provider.redeemInvite(token);
