@@ -148,18 +148,32 @@ def validate_and_redeem_invite_token(db: Session, invite_token: str, requester_i
     if not token_record:
         raise HTTPException(status_code=400, detail="Invalid QR code or invite token.")
         
-    if token_record.is_used:
-        raise HTTPException(status_code=400, detail="This invite has already been used.")
-        
     if token_record.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=400, detail="This invite has expired.")
 
     if token_record.owner_user_id == requester_id:
         raise HTTPException(status_code=400, detail="You cannot redeem your own invite.")
     
+    # If already used, check who used it
+    if token_record.is_used:
+        if token_record.used_by_user_id == requester_id:
+            # Already redeemed by THIS user, treat as success/exists
+            return {
+                "id": requester_id, 
+                "requester_user_id": requester_id,
+                "owner_user_id": token_record.owner_user_id,
+                "status": "already_exists",
+                "created_at": token_record.used_at or datetime.now(timezone.utc),
+                "message": "You have already redeemed this invite."
+            }
+        else:
+            raise HTTPException(status_code=400, detail="This invite has already been used by another user.")
+
+    # Mark as used
     token_record.is_used = True
     token_record.used_by_user_id = requester_id
     token_record.used_at = datetime.now(timezone.utc)
+    db.commit() # Commit the 'used' status first to prevent race conditions
     
     try:
         req = send_access_request(db, requester_id, token_record.owner_user_id)
@@ -167,13 +181,10 @@ def validate_and_redeem_invite_token(db: Session, invite_token: str, requester_i
         return _map_request(db, req)
     except HTTPException as e:
         if "already" in str(e.detail).lower() or "pending" in str(e.detail).lower():
-            # If it's just that they already have it, treat as success but with a note
+            # If it's just that they already have it, treat as 200 OK
             print(f"[INFO] Invite redemption skip: {e.detail}")
-            # We still need to return an AccessRequestOut compatible object
-            # Mocking a response that looks like an accepted request or similar
-            # For simplicity, if it's already accepted, let's find the request or return a summary
             return {
-                "id": requester_id, # Mock ID
+                "id": requester_id, 
                 "requester_user_id": requester_id,
                 "owner_user_id": token_record.owner_user_id,
                 "status": "already_exists",
