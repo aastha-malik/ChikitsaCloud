@@ -193,48 +193,109 @@ class _FamilyScreenState extends State<FamilyScreen> {
     );
   }
 
-  bool _isScanning = false;
-
   void _openScanner() {
-    _isScanning = false; // Reset
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => Scaffold(
-          appBar: AppBar(title: const Text('Scan QR Code')),
-          body: MobileScanner(
-            onDetect: (capture) async {
-              if (_isScanning) return; // Debounce
+        builder: (context) => const QRScannerPage(),
+      ),
+    ).then((token) async {
+      if (token != null && token is String) {
+        final provider = context.read<FamilyProvider>();
+        final success = await provider.redeemInvite(token);
+        
+        if (mounted) {
+          String message = 'Access request sent!';
+          if (!success && provider.errorMessage != null) {
+            message = provider.errorMessage!;
+          } else if (success && provider.lastRedeemResult?['status'] == 'already_exists') {
+            message = provider.lastRedeemResult?['message'] ?? 'You already have access or a pending request.';
+          }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      }
+    });
+  }
+}
+
+class QRScannerPage extends StatefulWidget {
+  const QRScannerPage({super.key});
+
+  @override
+  State<QRScannerPage> createState() => _QRScannerPageState();
+}
+
+class _QRScannerPageState extends State<QRScannerPage> {
+  bool _isProcessed = false;
+  final MobileScannerController _controller = MobileScannerController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Scan QR Code'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+      ),
+      body: Stack(
+        children: [
+          MobileScanner(
+            controller: _controller,
+            onDetect: (capture) {
+              if (_isProcessed) return;
               
               final List<Barcode> barcodes = capture.barcodes;
               if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
-                _isScanning = true;
-                final token = barcodes.first.rawValue!;
-                
-                final provider = context.read<FamilyProvider>();
-                final success = await provider.redeemInvite(token);
-                
-                if (mounted) {
-                  Navigator.pop(context); // Pop after result
-                  String message = 'Access request sent!';
-                  
-                  if (!success && provider.errorMessage != null) {
-                    message = provider.errorMessage!;
-                  } else if (success && provider.lastRedeemResult?['status'] == 'already_exists') {
-                    message = provider.lastRedeemResult?['message'] ?? 'You already have access or a pending request.';
-                  }
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(message))
-                  );
-                }
+                _isProcessed = true;
+                final String code = barcodes.first.rawValue!;
+                Navigator.pop(context, code);
               }
             },
           ),
-        ),
+          // Gradient Overlay to make it look premium
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withOpacity(0.5),
+                  Colors.transparent,
+                  Colors.transparent,
+                  Colors.black.withOpacity(0.5),
+                ],
+              ),
+            ),
+          ),
+          Center(
+            child: Container(
+              width: 250,
+              height: 250,
+              decoration: BoxDecoration(
+                border: Border.all(color: AppTheme.primaryColor, width: 4),
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
+
 
   Widget _buildRequestsTab(FamilyProvider provider) {
     return ListView(
