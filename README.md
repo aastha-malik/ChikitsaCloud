@@ -1,110 +1,187 @@
-# CHIKITSACLOUD 🩺
+#   ChikitsaCloud
 
-CHIKITSACLOUD is an **AI-powered medical data evaluation and decision-support platform** designed to help patients and healthcare providers quickly identify abnormal health parameters, prioritize critical conditions, and maintain a unified medical history.
-
-> ⚠️ **Disclaimer:** CHIKITSACLOUD provides AI-based risk flagging and decision support only. It does **not** diagnose diseases or prescribe medication.
+ChikitsaCloud is a cloud-based medical record management system that allows users to securely store, manage, and share medical documents while discovering nearby hospitals in real time.
 
 ---
 
-## 🚀 Major Features
+## 📌 Problem Statement
 
-### 1️⃣ Centralized Medical Records
+Medical records are often stored physically or scattered across multiple platforms, making them difficult to access during emergencies. Sharing reports with family members or doctors can be inconvenient and insecure.
 
-* Securely stores **all patient medical data** in one place
-* Supports vitals, lab reports, and historical test data
-* Enables easy access during emergencies or consultations
+There is a need for a centralized, secure, and easily accessible digital medical record system.
 
 ---
 
-### 2️⃣ AI-Based Medical Data Evaluation
+## 💡 Solution
 
-* Analyzes medical parameters using **personalized reference ranges** instead of fixed values
-* Adjusts evaluation based on:
+ChikitsaCloud provides a secure cloud platform where users can:
 
-  * Age
-  * Gender
-  * Height & Weight
-  * BMI
-* Flags **both abnormally high and dangerously low values**
-
----
-
-### 3️⃣ Intelligent Risk Flagging System
-
-Visual severity indicators for instant understanding:
-
-* 🟣 **Purple** → Extremely critical / life-threatening
-* 🔴 **Red** → Critical, immediate medical attention recommended
-* 🟡 **Yellow** → Suspicious, monitoring or re-test advised
-* 🟨 **Light Yellow** → Mild deviation, lifestyle adjustment suggested
-* ⚪ **White** → Normal and healthy
-
-Each flagged parameter includes:
-
-* Reason for flag
-* Influencing factors (age, gender, BMI, etc.)
-* Simple, human-readable explanation
+- Upload and store medical records (PDFs & Images)
+- Categorize and manage records efficiently
+- Share records with family members via QR & invite system
+- Discover nearby hospitals using GPS or manual location
+- Access medical information anytime, anywhere
 
 ---
 
-### 4️⃣ ML-Based Overall Health Risk Prediction
+## ✨ Key Features
 
-* Combines multiple parameters to estimate **overall health risk level**
-* Outputs an interpretable risk score (e.g., Low / Moderate / High)
-* Designed to complement rule-based medical logic
-
----
-
-### 5️⃣ Emergency SOS System
-
-* One-tap **SOS emergency call feature**
-* Shares critical medical information instantly during emergencies
+- 🔐 User Authentication (Register / Login)
+- 📂 Upload medical records (PDF, Image)
+- 🏷 Add custom record name and type
+- ☁ Cloud storage integration using Supabase
+- 📍 Nearby hospital discovery
+- 👨‍👩‍👧 Family access via QR-based sharing
+- 📱 Mobile-first application built with Flutter
 
 ---
 
-### 6️⃣ Automated Health Reminders
+## 🛠 Tech Stack
 
-* Sends reminders for **periodic medical tests** (e.g., every 6 months)
-* Helps users stay proactive about preventive healthcare
+### Frontend
+- Flutter
+- Dart
 
----
+### Backend
+- FastAPI
+- Python
 
-### 7️⃣ Nearest Hospital Mapping
+### Database & Cloud Storage
+- Supabase (PostgreSQL-based database + storage)
 
-* Locates nearby hospitals and medical facilities using maps
-* Useful during emergencies or urgent care situations
-
----
-
-### 8️⃣ Abnormality Detection & Alerts
-
-* Automatically detects abnormal medical values
-* Raises alerts when concerning patterns or critical values are found
-* Designed for quick triage and prioritization
+### Deployment
+- Backend deployed on Render
+- APK distributed via Google Drive
 
 ---
 
-## 🎯 Goal of CHIKITSACLOUD
+## 🌐 Live Demo & Access
 
-To build a **reliable, explainable, and scalable AI healthcare platform** that:
+### 📱 Download APK
 
-* Improves clinical decision efficiency
-* Helps patients understand their health data
-* Assists doctors in quickly identifying high-risk cases
-* Promotes preventive and proactive healthcare
+You can download and install the app using the link below:
 
----
+```
+https://drive.google.com/file/d/10A-i4ca3aM3ZiWz79QTj451qiwctJ6P_/view?usp=sharing
+```
 
-## 🧠 Technology Highlights
-
-* Rule-based medical logic with explainability
-* ML-assisted risk prediction layer
-* Structured JSON outputs for API and dashboard integration
-* CLI, backend, and future web/mobile UI ready
+⚠ Note:
+Since the app is not published on the Google Play Store, Android may show a security warning during installation.  
+Enable **"Install from Unknown Sources"** temporarily to install the APK.
 
 ---
 
-**CHIKITSACLOUD — Where AI meets responsible healthcare.**
+### 🔎 Test Backend APIs (Live Swagger UI)
 
+The backend is deployed and accessible via Swagger UI:
 
+```
+https://chikitsacloud-pn0c.onrender.com/docs#/
+```
 
+You can directly test API endpoints from the deployed Swagger interface.
+
+---
+
+## 🏗 System Architecture
+
+```
+User → Flutter App → FastAPI Backend → Supabase Database
+                                      ↘ Supabase Storage
+```
+
+### Application Flow
+
+1. User uploads a medical file from the Flutter app.
+2. The request is sent to the FastAPI backend.
+3. Backend validates user authentication.
+4. File is stored in Supabase Storage.
+5. Metadata (record name, type, file URL, user ID) is stored in Supabase database.
+6. Records are fetched and displayed securely when requested.
+
+---
+
+## 🔐 Security Considerations
+
+- Authentication-based access control
+- Backend validation before storage
+- Secure cloud storage via Supabase
+- Controlled sharing via QR-based invite system
+- Separation of file storage and metadata handling
+
+---
+
+## 🚀 Local Installation & Setup
+
+### Clone Repository
+
+```bash
+git clone https://github.com/YOUR-USERNAME/ChikitsaCloud.git
+cd ChikitsaCloud
+```
+
+---
+
+### Backend Setup
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate   # Linux / Mac
+venv\Scripts\activate      # Windows
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
+
+Backend runs at:
+```
+http://127.0.0.1:8000
+```
+
+---
+
+### Frontend Setup
+
+```bash
+cd frontend
+flutter pub get
+flutter run
+```
+
+---
+
+## 📱 Screenshots
+
+_Add application screenshots here_
+
+Example:
+
+```
+![Login Screen](screenshots/login.png)
+![Dashboard](screenshots/dashboard.png)
+```
+
+---
+
+## 🔮 Future Improvements
+
+- Role-based access control (RBAC)
+- End-to-end encryption of medical files
+- Doctor dashboard
+- Appointment booking integration
+- Play Store deployment
+- CI/CD pipeline integration
+
+---
+
+## 👩‍💻 Contributors
+
+- Aastha Malik
+- Vanisha
+- Shubham
+
+---
+
+## 📄 License
+
+This project is developed for educational and demonstration purposes.
