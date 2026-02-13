@@ -255,14 +255,25 @@ class _QRScannerPageState extends State<QRScannerPage> {
         children: [
           MobileScanner(
             controller: _controller,
-            onDetect: (capture) {
+            onDetect: (capture) async {
               if (_isProcessed) return;
               
               final List<Barcode> barcodes = capture.barcodes;
               if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
-                _isProcessed = true;
+                // Instantly lock processing
+                setState(() => _isProcessed = true);
+                
                 final String code = barcodes.first.rawValue!;
-                Navigator.pop(context, code);
+                
+                // Explicitly stop the camera before navigating away
+                await _controller.stop();
+                
+                // Small delay to let the camera release hardware before UI pop
+                await Future.delayed(const Duration(milliseconds: 200));
+                
+                if (mounted) {
+                  Navigator.pop(context, code);
+                }
               }
             },
           ),
