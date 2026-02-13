@@ -13,17 +13,25 @@ from app.models.user import AuthUser, UserProfile
 
 def send_access_request(db: Session, requester_id: UUID, owner_id: UUID):
     if requester_id == owner_id:
-        raise HTTPException(status_code=400, detail="Cannot request access to your own records")
+        raise HTTPException(status_code=400, detail="You cannot request access to your own records.")
     
-    existing = db.query(FamilyAccessRequest).filter(
+    # Check if access is already granted
+    existing_access = db.query(FamilyMedicalAccess).filter(
+        and_(FamilyMedicalAccess.owner_user_id == owner_id, FamilyMedicalAccess.viewer_user_id == requester_id)
+    ).first()
+    if existing_access:
+        raise HTTPException(status_code=400, detail="Access has already been granted to this user.")
+
+    # Check for existing pending request
+    existing_request = db.query(FamilyAccessRequest).filter(
         and_(
             FamilyAccessRequest.requester_user_id == requester_id,
             FamilyAccessRequest.owner_user_id == owner_id,
             FamilyAccessRequest.status == "pending"
         )
     ).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Access request already pending")
+    if existing_request:
+        raise HTTPException(status_code=400, detail="An access request is already pending for this user.")
     
     new_request = FamilyAccessRequest(requester_user_id=requester_id, owner_user_id=owner_id)
     db.add(new_request)
@@ -112,6 +120,19 @@ def generate_invite_token(db: Session, owner_id: UUID, expires_in_hours: int = 2
     import secrets
     from datetime import timedelta
     from app.models.family_access import FamilyInviteToken
+    
+    # Reuse existing unexpired unused token
+    existing_token = db.query(FamilyInviteToken).filter(
+        and_(
+            FamilyInviteToken.owner_user_id == owner_id,
+            FamilyInviteToken.is_used == False,
+            FamilyInviteToken.expires_at > datetime.now(timezone.utc)
+        )
+    ).order_by(FamilyInviteToken.created_at.desc()).first()
+    
+    if existing_token:
+        return existing_token
+
     invite_token = secrets.token_urlsafe(32)
     expires_at = datetime.now(timezone.utc) + timedelta(hours=expires_in_hours)
     new_token = FamilyInviteToken(owner_user_id=owner_id, invite_token=invite_token, expires_at=expires_at)
@@ -123,10 +144,18 @@ def generate_invite_token(db: Session, owner_id: UUID, expires_in_hours: int = 2
 def validate_and_redeem_invite_token(db: Session, invite_token: str, requester_id: UUID):
     from app.models.family_access import FamilyInviteToken
     token_record = db.query(FamilyInviteToken).filter(FamilyInviteToken.invite_token == invite_token).first()
-    if not token_record or token_record.expires_at < datetime.now(timezone.utc) or token_record.is_used:
-        raise HTTPException(status_code=400, detail="Invalid or expired token")
+    
+    if not token_record:
+        raise HTTPException(status_code=400, detail="Invalid QR code or invite token.")
+        
+    if token_record.is_used:
+        raise HTTPException(status_code=400, detail="This invite has already been used.")
+        
+    if token_record.expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="This invite has expired.")
+
     if token_record.owner_user_id == requester_id:
-        raise HTTPException(status_code=400, detail="Cannot redeem your own token")
+        raise HTTPException(status_code=400, detail="You cannot redeem your own invite.")
     
     token_record.is_used = True
     token_record.used_by_user_id = requester_id
