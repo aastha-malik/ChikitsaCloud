@@ -9,9 +9,11 @@ from app.core import security
 from app.services import email_service
 
 def create_user(db: Session, user_data: UserSignup):
-    print(f"[DEBUG] Starting signup for email: {user_data.email}")
+    # Normalize email
+    email = user_data.email.strip().lower()
+    print(f"[DEBUG] Starting signup for email: {email}")
     # 1. Check if email exists
-    existing_user = db.query(AuthUser).filter(AuthUser.email == user_data.email).first()
+    existing_user = db.query(AuthUser).filter(AuthUser.email == email).first()
     if existing_user:
         print(f"[WARNING] Signup failed: Email {user_data.email} already registered")
         raise HTTPException(
@@ -29,7 +31,7 @@ def create_user(db: Session, user_data: UserSignup):
     
     # 4. Create User Record (Auto-verified)
     new_user = AuthUser(
-        email=user_data.email,
+        email=email,
         password_hash=hashed_password,
         auth_provider="email",
         is_email_verified=True,  # Bypass verification
@@ -89,18 +91,25 @@ def create_user(db: Session, user_data: UserSignup):
 #     }
 
 def authenticate_user(db: Session, data: UserLogin):
-    user = db.query(AuthUser).filter(AuthUser.email == data.email).first()
+    # Normalize email
+    email = data.email.strip().lower()
+    print(f"[DEBUG] Attempting login for email: {email}")
+    
+    user = db.query(AuthUser).filter(AuthUser.email == email).first()
     
     # 1. Check user exists
     if not user:
+        print(f"[WARNING] Login failed: User {email} not found")
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     # 2. Check auth provider
     if user.auth_provider != "email":
+        print(f"[WARNING] Login failed: User {email} registered with {user.auth_provider}")
         raise HTTPException(status_code=400, detail=f"Please login with {user.auth_provider}")
         
     # 3. Check password
     if not user.password_hash or not security.verify_password(data.password, user.password_hash):
+        print(f"[WARNING] Login failed: Password mismatch for {email}")
         raise HTTPException(status_code=401, detail="Invalid credentials")
         
     # 4. Check verification (Disabled)
