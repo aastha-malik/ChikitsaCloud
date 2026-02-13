@@ -146,7 +146,10 @@ def validate_and_redeem_invite_token(db: Session, invite_token: str, requester_i
     token_record = db.query(FamilyInviteToken).filter(FamilyInviteToken.invite_token == invite_token).first()
     
     if not token_record:
+        print(f"[WARNING] Redeem failed: Token '{invite_token[:8]}...' not found in DB")
         raise HTTPException(status_code=400, detail="Invalid QR code or invite token.")
+    
+    print(f"[DEBUG] Found token for owner: {token_record.owner_user_id}, used status: {token_record.is_used}")
         
     if token_record.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=400, detail="This invite has expired.")
