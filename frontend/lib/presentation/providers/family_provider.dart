@@ -86,6 +86,8 @@ class FamilyProvider with ChangeNotifier {
   Map<String, dynamic>? get lastRedeemResult => _lastRedeemResult;
 
   Future<bool> redeemInvite(String token) async {
+    if (_isLoading) return false; // Safety lock: ignore second call if first is still running
+    
     _isLoading = true;
     _errorMessage = null;
     _lastRedeemResult = null;

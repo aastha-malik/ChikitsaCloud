@@ -233,7 +233,8 @@ class QRScannerPage extends StatefulWidget {
 }
 
 class _QRScannerPageState extends State<QRScannerPage> {
-  bool _isProcessed = false;
+  // CRITICAL: Synchronous lock to prevent double-pop and double-request
+  bool _hasDetected = false;
   final MobileScannerController _controller = MobileScannerController();
 
   @override
@@ -250,63 +251,71 @@ class _QRScannerPageState extends State<QRScannerPage> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
       body: Stack(
         children: [
-          MobileScanner(
-            controller: _controller,
-            onDetect: (capture) async {
-              if (_isProcessed) return;
-              
-              final List<Barcode> barcodes = capture.barcodes;
-              if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
-                // Instantly lock processing
-                setState(() => _isProcessed = true);
+          // If already detected, UNMOUNT the scanner immediately to release GPU
+          if (!_hasDetected)
+            MobileScanner(
+              controller: _controller,
+              onDetect: (capture) async {
+                if (_hasDetected) return;
                 
-                final String code = barcodes.first.rawValue!;
-                
-                // Explicitly stop the camera before navigating away
-                await _controller.stop();
-                
-                // Small delay to let the camera release hardware before UI pop
-                await Future.delayed(const Duration(milliseconds: 200));
-                
-                if (mounted) {
-                  Navigator.pop(context, code);
+                final List<Barcode> barcodes = capture.barcodes;
+                if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
+                  // Hard lock immediately
+                  _hasDetected = true;
+                  final String code = barcodes.first.rawValue!;
+                  
+                  // Release hardware
+                  await _controller.stop();
+                  
+                  if (mounted) {
+                    // Force rebuild to unmount scanner widget from Stack
+                    setState(() {});
+                    
+                    // Give OS time to clear the camera buffer
+                    await Future.delayed(const Duration(milliseconds: 150));
+                    
+                    if (mounted) {
+                      Navigator.of(context).pop(code);
+                    }
+                  }
                 }
-              }
-            },
-          ),
-          // Gradient Overlay to make it look premium
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withOpacity(0.5),
-                  Colors.transparent,
-                  Colors.transparent,
-                  Colors.black.withOpacity(0.5),
-                ],
-              ),
+              },
             ),
-          ),
-          Center(
+          
+          if (_hasDetected)
+            const Center(child: CircularProgressIndicator()),
+
+          // UI Overlay
+          IgnorePointer(
             child: Container(
-              width: 250,
-              height: 250,
               decoration: BoxDecoration(
-                border: Border.all(color: AppTheme.primaryColor, width: 4),
-                borderRadius: BorderRadius.circular(20),
+                color: _hasDetected ? Colors.white : Colors.black.withOpacity(0.3),
               ),
             ),
           ),
+          if (!_hasDetected)
+            Center(
+              child: Container(
+                width: 250,
+                height: 250,
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppTheme.primaryColor, width: 4),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
-
+}
 
   Widget _buildRequestsTab(FamilyProvider provider) {
     return ListView(
