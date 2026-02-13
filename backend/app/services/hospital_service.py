@@ -68,18 +68,23 @@ async def search_nearby_hospitals(lat: float, lon: float, radius_km: int = 5) ->
     out center;
     """
     
+    headers = {"User-Agent": USER_AGENT}
+    print(f"[DEBUG] Searching hospitals near {lat}, {lon} with radius {radius_km}km")
+    
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(OVERPASS_URL, data={"data": query}, timeout=15.0)
+            response = await client.post(OVERPASS_URL, data={"data": query}, headers=headers, timeout=15.0)
             
             if response.status_code != 200:
+                print(f"[ERROR] Overpass API failed with status {response.status_code}: {response.text}")
                 raise HTTPException(
                     status_code=status.HTTP_502_BAD_GATEWAY, 
-                    detail="Hospital discovery service (Overpass) unavailable"
+                    detail=f"Hospital discovery service temporarily unavailable (Code: {response.status_code})"
                 )
             
             data = response.json()
             elements = data.get("elements", [])
+            print(f"[DEBUG] Found {len(elements)} raw elements from Overpass")
             
             hospitals = []
             for element in elements:
