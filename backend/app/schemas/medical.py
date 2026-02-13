@@ -1,10 +1,13 @@
 from pydantic import BaseModel
 from uuid import UUID
+from typing import Optional
 
 class MedicalInput(BaseModel):
     user_id: UUID
-    height: float
-    weight: float
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    height: Optional[float] = None
+    weight: Optional[float] = None
     bp_systolic: float
     bp_diastolic: float
     spo2: float

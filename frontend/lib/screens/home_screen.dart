@@ -10,6 +10,7 @@ import 'profile_screen.dart';
 import 'family_screen.dart';
 import 'records_screen.dart';
 import 'hospitals_screen.dart';
+import 'analysis_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -119,22 +120,37 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 _buildSectionTitle('Quick Access'),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    QuickAccessCard(
-                      title: 'Upload Record',
-                      icon: Icons.note_add_outlined,
-                      iconColor: Colors.blue,
-                      onTap: _handleUpload,
-                    ),
-                    const SizedBox(width: 16),
-                    QuickAccessCard(
-                      title: 'Share Access',
-                      icon: Icons.share_location_outlined,
-                      iconColor: Colors.purple,
-                      onTap: () => setState(() => _selectedIndex = 2), // Switch to Family tab
-                    ),
-                  ],
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      QuickAccessCard(
+                        title: 'Upload Record',
+                        icon: Icons.note_add_outlined,
+                        iconColor: Colors.blue,
+                        onTap: _handleUpload,
+                      ),
+                      const SizedBox(width: 16),
+                      QuickAccessCard(
+                        title: 'Share Access',
+                        icon: Icons.share_location_outlined,
+                        iconColor: Colors.purple,
+                        onTap: () => setState(() => _selectedIndex = 2), // Switch to Family tab
+                      ),
+                      const SizedBox(width: 16),
+                      QuickAccessCard(
+                        title: 'Health AI',
+                        icon: Icons.analytics_outlined,
+                        iconColor: Colors.orange,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const AnalysisScreen()),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 32),
                 Row(

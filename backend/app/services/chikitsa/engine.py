@@ -1,113 +1,172 @@
+from .clinical_rules import ClinicalKnowledgeBase
+from .schemas import EvaluationResult, SeverityColor
 from app.ML.ml_model import ml_model_instance
+from typing import Dict, Any, List
 
-def run_chikitsa_engine(data: dict):
-    """
-    Evaluates patient medical data and returns health risks and flags.
-    """
-    flags = []
-    risk_score = 0
-    
-    # 1. Blood Pressure Analysis
-    sys = data.get("bp_systolic")
-    dia = data.get("bp_diastolic")
-    if sys and dia:
-        if sys >= 140 or dia >= 90:
-            flags.append({
-                "parameter": "Blood Pressure",
-                "severity": "High",
-                "explanation": f"BP is high ({sys}/{dia}). Normal range is around 120/80."
-            })
-            risk_score += 2
-        elif sys <= 90 or dia <= 60:
-            flags.append({
-                "parameter": "Blood Pressure",
-                "severity": "Low",
-                "explanation": f"BP is low ({sys}/{dia}). May cause dizziness."
-            })
-            risk_score += 1
+class ChikitsaEngine:
+    def __init__(self):
+        self.kb = ClinicalKnowledgeBase()
 
-    # 2. SpO2 Analysis
-    spo2 = data.get("spo2")
-    if spo2 and spo2 < 95:
-        flags.append({
-            "parameter": "Oxygen Saturation (SpO2)",
-            "severity": "Warning",
-            "explanation": f"SpO2 is {spo2}%. Below 95% indicates potential respiratory issues."
-        })
-        risk_score += 2
+    def determine_severity(self, value, low, high, is_critical_metric=False):
+        if low <= value <= high:
+            return (
+                SeverityColor.WHITE,
+                "Normal",
+                "Value is within the healthy range for your profile."
+            )
 
-    # 3. Hemoglobin Analysis
-    hb = data.get("hemoglobin")
-    gender = data.get("gender", "").lower()
-    if hb:
-        if (gender == "female" and hb < 12) or (gender == "male" and hb < 13.5) or hb < 12:
-            flags.append({
-                "parameter": "Hemoglobin",
-                "severity": "Warning",
-                "explanation": f"Hemoglobin is low ({hb} g/dL). Potential signs of anemia."
-            })
-            risk_score += 1
+        midpoint = (low + high) / 2
+        deviation_pct = abs(value - midpoint) / midpoint * 100
+        direction = "High" if value > high else "Low"
 
-    # 4. Blood Sugar Analysis
-    sugar = data.get("blood_sugar")
-    if sugar and sugar > 140:
-        flags.append({
-            "parameter": "Blood Sugar",
-            "severity": "High",
-            "explanation": f"Blood sugar is elevated ({sugar} mg/dL). Monitor your intake."
-        })
-        risk_score += 2
+        if deviation_pct > 50 or (is_critical_metric and deviation_pct > 30):
+            return (
+                SeverityColor.PURPLE,
+                f"Critically {direction}",
+                "Immediate medical attention recommended."
+            )
 
-    # 5. Cholesterol Analysis
-    cholest = data.get("cholesterol")
-    if cholest and cholest > 200:
-        flags.append({
-            "parameter": "Total Cholesterol",
-            "severity": "Warning",
-            "explanation": f"Cholesterol is high ({cholest} mg/dL). Consider a heart-healthy diet."
-        })
-        risk_score += 1
+        if deviation_pct > 25:
+            return (
+                SeverityColor.RED,
+                f"Significantly {direction}",
+                "Requires clinical attention."
+            )
 
-    # 6. ML Risk Prediction
+        if deviation_pct > 10:
+            return (
+                SeverityColor.YELLOW,
+                f"Moderately {direction}",
+                "Suspicious deviation; monitoring advised."
+            )
+
+        return (
+            SeverityColor.LIGHT_YELLOW,
+            f"Slightly {direction}",
+            "Minor deviation; lifestyle adjustment may help."
+        )
+
+    def evaluate_param(self, name: str, value: float, unit: str, patient_age: int, patient_gender: str, patient_bmi: float) -> EvaluationResult:
+        low, high = None, None
+        factors = []
+        is_critical = False
+
+        if name == "Systolic BP":
+            low, high = self.kb.get_bp_range(patient_age)[0]
+            is_critical = True
+            factors.append(f"Age: {patient_age}")
+
+        elif name == "Diastolic BP":
+            low, high = self.kb.get_bp_range(patient_age)[1]
+            is_critical = True
+            factors.append(f"Age: {patient_age}")
+
+        elif name == "Hemoglobin":
+            low, high = self.kb.get_hemoglobin_range(patient_gender, patient_age)
+            factors.append(f"Gender: {patient_gender}")
+
+        elif name == "Creatinine":
+            low, high = self.kb.get_creatinine_range(patient_gender)
+            factors.append(f"Gender: {patient_gender}")
+
+        elif name == "Blood Sugar (Fasting)":
+            low, high = self.kb.get_glucose_range("Fasting")
+            if patient_bmi > 25:
+                factors.append(f"BMI: {patient_bmi:.2f} (Overweight risk factor)")
+
+        elif name == "SpO2":
+            low, high = 95, 100
+            is_critical = True
+
+        elif name == "Cholesterol":
+            low, high = self.kb.get_cholesterol_range(patient_age)
+            is_critical = True
+            factors.append(f"Age: {patient_age}")
+
+        if low is None:
+            return EvaluationResult(
+                parameter_name=name,
+                patient_value=value,
+                unit=unit,
+                personalized_range="Unavailable",
+                deviation_level="Unknown",
+                severity_color=SeverityColor.YELLOW.value,
+                explanation="No reference range available.",
+                influencing_factors=[]
+            )
+
+        severity_enum, deviation_lvl, expl_base = self.determine_severity(
+            value, low, high, is_critical
+        )
+
+        explanation = expl_base
+        if severity_enum != SeverityColor.WHITE:
+            explanation += f" {deviation_lvl} values may indicate physiological stress."
+        else:
+            explanation = "Excellent. Maintain current lifestyle."
+
+        return EvaluationResult(
+            parameter_name=name,
+            patient_value=value,
+            unit=unit,
+            personalized_range=f"{low} - {high}",
+            deviation_level=deviation_lvl,
+            severity_color=severity_enum.value,
+            explanation=explanation,
+            influencing_factors=factors
+        )
+
+def run_chikitsa_engine(data: Dict[str, Any]):
+    engine = ChikitsaEngine()
+    patient_age = data.get("age", 30)
+    patient_gender = data.get("gender", "Male")
+    height = data.get("height", 170)
+    weight = data.get("weight", 70)
+    bmi = weight / ((height / 100) ** 2) if height > 0 else 0
+
+    params = [
+        ("Systolic BP", data.get("bp_systolic"), "mmHg"),
+        ("Diastolic BP", data.get("bp_diastolic"), "mmHg"),
+        ("SpO2", data.get("spo2"), "%"),
+        ("Hemoglobin", data.get("hemoglobin"), "g/dL"),
+        ("Creatinine", data.get("creatinine"), "mg/dL"),
+        ("Blood Sugar (Fasting)", data.get("blood_sugar"), "mg/dL"),
+        ("Cholesterol", data.get("cholesterol"), "mg/dL"),
+    ]
+
+    results = []
+    for name, val, unit in params:
+        if val is not None and val > 0:
+            results.append(engine.evaluate_param(name, val, unit, patient_age, patient_gender, bmi))
+
+    # ML Risk Prediction
     try:
-        class TempPatient:
-            def __init__(self, data):
-                self.age = data.get("age")
-                self.gender = data.get("gender")
-                self.height_cm = data.get("height")
-                self.weight_kg = data.get("weight")
-                self.bmi = (
-                    data.get("weight") / ((data.get("height") / 100) ** 2)
-                    if data.get("height") else 0
-                )
-
-        patient_obj = TempPatient(data)
-
-        ml_values = {
+        class PatientObj:
+            def __init__(self, age, gender, h, w, b):
+                self.age = age
+                self.gender = gender
+                self.height_cm = h
+                self.weight_kg = w
+                self.bmi = b
+        
+        patient = PatientObj(patient_age, patient_gender, height, weight, bmi)
+        ml_input = {
             "Systolic BP": data.get("bp_systolic"),
             "Diastolic BP": data.get("bp_diastolic"),
             "Blood Sugar (Fasting)": data.get("blood_sugar"),
             "Cholesterol": data.get("cholesterol")
         }
-
-        ml_prediction = ml_model_instance.predict(patient_obj, ml_values)
-
-    except Exception as e:
-        ml_prediction = None
-
-    # Overall Risk Assessment
-    if risk_score == 0:
-        risk_level = "Low"
-    elif risk_score <= 2:
-        risk_level = "Mild"
-    elif risk_score <= 4:
-        risk_level = "Moderate"
-    else:
-        risk_level = "High"
+        ml_risk = ml_model_instance.predict(patient, ml_input)
+        risk_map = {0: "Low Risk", 1: "Moderate Risk", 2: "High Risk", 3: "Critical Risk"}
+        risk_label = risk_map.get(ml_risk, "Unknown")
+    except Exception:
+        ml_risk = -1
+        risk_label = "Error"
 
     return {
-        "overall_health_risk": risk_level,
-        "ml_risk_prediction": ml_prediction,
-        "flagged_parameters": flags,
-        "summary": f"Analysis complete for {data.get('name', 'Patient')}. {len(flags)} parameter(s) flagged."
+        "overall_health_risk": risk_label,
+        "ml_risk_score": ml_risk,
+        "flagged_parameters": [res.to_dict() for res in results if res.severity_color != SeverityColor.WHITE.value],
+        "all_analysis": [res.to_dict() for res in results],
+        "summary": f"Analysis complete. {len([r for r in results if r.severity_color != SeverityColor.WHITE.value])} parameter(s) flagged."
     }

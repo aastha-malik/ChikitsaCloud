@@ -35,6 +35,7 @@ class QuickAccessCard extends StatelessWidget {
             ],
           ),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
@@ -47,10 +48,12 @@ class QuickAccessCard extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 title,
+                textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 14, // Slightly smaller to accommodate 3 cards
+                  fontWeight: FontWeight.w600,
                   color: Color(0xFF1E293B),
+                  height: 1.2,
                 ),
               ),
             ],
