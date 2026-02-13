@@ -83,12 +83,23 @@ class FamilyProvider with ChangeNotifier {
   }
 
   Future<bool> redeemInvite(String token) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
     try {
       await _apiClient.dio.post('/family-access/redeem-invite', data: {'invite_token': token});
       await fetchRequests();
       return true;
-    } catch (e) {
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      _errorMessage = data is Map ? data['detail'] : data?.toString() ?? 'Redeem failed';
       return false;
+    } catch (e) {
+      _errorMessage = 'An unexpected error occurred';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 

@@ -205,10 +205,11 @@ class _FamilyScreenState extends State<FamilyScreen> {
               if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
                 final token = barcodes.first.rawValue!;
                 Navigator.pop(context);
-                final success = await context.read<FamilyProvider>().redeemInvite(token);
+                final provider = context.read<FamilyProvider>();
+                final success = await provider.redeemInvite(token);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(success ? 'Access request sent!' : 'Invalid or expired QR code'))
+                    SnackBar(content: Text(success ? 'Access request sent!' : (provider.errorMessage ?? 'Invalid QR code')))
                   );
                 }
               }
