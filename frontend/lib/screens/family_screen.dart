@@ -193,7 +193,10 @@ class _FamilyScreenState extends State<FamilyScreen> {
     );
   }
 
+  bool _isScanning = false;
+
   void _openScanner() {
+    _isScanning = false; // Reset
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -201,15 +204,30 @@ class _FamilyScreenState extends State<FamilyScreen> {
           appBar: AppBar(title: const Text('Scan QR Code')),
           body: MobileScanner(
             onDetect: (capture) async {
+              if (_isScanning) return; // Debounce
+              
               final List<Barcode> barcodes = capture.barcodes;
               if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
+                _isScanning = true;
                 final token = barcodes.first.rawValue!;
-                Navigator.pop(context);
+                
                 final provider = context.read<FamilyProvider>();
                 final success = await provider.redeemInvite(token);
+                
                 if (mounted) {
+                  Navigator.pop(context); // Pop after result
+                  String message = 'Access request sent!';
+                  
+                  // Check if we have a special status (requires direct response inspection if possible, 
+                  // but we'll check the error message if success is false, or just generic success)
+                  if (!success && provider.errorMessage != null) {
+                    message = provider.errorMessage!;
+                  } else if (success && provider.pendingRequests.any((r) => r['status'] == 'already_exists')) {
+                    message = 'You already have access or a pending request.';
+                  }
+
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(success ? 'Access request sent!' : (provider.errorMessage ?? 'Invalid QR code')))
+                    SnackBar(content: Text(message))
                   );
                 }
               }
