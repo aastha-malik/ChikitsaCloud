@@ -212,8 +212,9 @@ ChikitsaCloud - Your Personal Health Record Companion
                 settings.EMAIL_BRIDGE_URL,
                 json={
                     "to": to_email,
-                    "subject": "🏥 ChikitsaCloud - Verify Your Email",
+                    "subject": "ChikitsaCloud - Verify Your Email",
                     "body": html_body,
+                    "plainText": plain_text,
                     "isHtml": True
                 },
                 timeout=10
@@ -230,7 +231,7 @@ ChikitsaCloud - Your Personal Health Record Companion
     # Fallback to SMTP (for local development)
     print(f"[DEBUG] Attempting to send via SMTP")
     msg = MIMEMultipart('alternative')
-    msg['Subject'] = '🏥 ChikitsaCloud - Verify Your Email'
+    msg['Subject'] = 'ChikitsaCloud - Verify Your Email'
     msg['From'] = settings.SMTP_EMAIL
     msg['To'] = to_email
     

@@ -3,15 +3,22 @@ function doPost(e) {
         const data = JSON.parse(e.postData.contents);
 
         // Check if email should be sent as HTML
-        if (data.isHtml) {
-            // Send HTML email using Gmail
+        if (data.isHtml && data.body) {
+            // Send HTML email with plain text fallback
+            const options = {
+                htmlBody: data.body
+            };
+
+            // Add plain text version if provided
+            if (data.plainText) {
+                options.body = data.plainText;
+            }
+
             GmailApp.sendEmail(
                 data.to,
                 data.subject,
-                "", // Plain text body (empty for HTML-only)
-                {
-                    htmlBody: data.body
-                }
+                data.plainText || "Please view this email in an HTML-compatible email client.",
+                options
             );
         } else {
             // Send plain text email
