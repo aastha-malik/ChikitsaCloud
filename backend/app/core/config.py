@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str
     SMTP_SERVER: str 
     SMTP_PORT: int
-    EMAIL_BRIDGE_URL: str = "" # Fallback for Render (Google Apps Script)
+    EMAIL_BRIDGE_URL: str = ""  # Optional: Google Apps Script bridge for Render
     
     # Auth
     SECRET_KEY: str
