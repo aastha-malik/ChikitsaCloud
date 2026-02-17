@@ -9,11 +9,12 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str
     
-    # Email (Generic SMTP)
+    # Email
     SMTP_EMAIL: str
     SMTP_PASSWORD: str
     SMTP_SERVER: str 
     SMTP_PORT: int
+    EMAIL_BRIDGE_URL: str = "" # Fallback for Render (Google Apps Script)
     
     # Auth
     SECRET_KEY: str

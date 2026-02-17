@@ -51,9 +51,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (success && mounted) {
         if (isLogin) {
+          // Successful login (verified user)
           Navigator.pushReplacementNamed(context, AppRoutes.home);
         } else {
-          // Go to verification screen after signup
+          // Successful signup (new user, needs verification)
           Navigator.pushReplacementNamed(
             context, 
             AppRoutes.verify,
@@ -63,9 +64,9 @@ class _LoginScreenState extends State<LoginScreen> {
       } else if (mounted) {
         final errorMessage = authProvider.errorMessage ?? 'Authentication failed';
         
-        // If login fails because email is not verified, redirect to verification screen
-        if (isLogin && (errorMessage.contains('Email not verified') || errorMessage.contains('403'))) {
-          Navigator.pushNamed(
+        // If login (sign in) fails specifically because email is not verified
+        if (isLogin && errorMessage.toLowerCase().contains('email not verified')) {
+          Navigator.pushReplacementNamed(
             context, 
             AppRoutes.verify,
             arguments: email,
