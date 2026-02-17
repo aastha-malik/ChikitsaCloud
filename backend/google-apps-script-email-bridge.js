@@ -9,11 +9,6 @@ function doPost(e) {
                 htmlBody: data.body
             };
 
-            // Add plain text version if provided
-            if (data.plainText) {
-                options.body = data.plainText;
-            }
-
             GmailApp.sendEmail(
                 data.to,
                 data.subject,

@@ -128,13 +128,13 @@ def send_verification_email(to_email: str, code: str):
     <div class="email-container">
         <!-- Header -->
         <div class="header">
-            <h1 class="logo">🏥 ChikitsaCloud</h1>
+            <h1 class="logo">ChikitsaCloud</h1>
             <p class="tagline">Your Personal Health Record Companion</p>
         </div>
         
         <!-- Content -->
         <div class="content">
-            <h2 class="greeting">Welcome to ChikitsaCloud! 👋</h2>
+            <h2 class="greeting">Welcome to ChikitsaCloud!</h2>
             
             <p class="message">
                 Thank you for signing up! We're excited to help you manage your medical records securely and efficiently.
@@ -148,13 +148,13 @@ def send_verification_email(to_email: str, code: str):
             <div class="code-container">
                 <p class="code-label">Your Verification Code</p>
                 <p class="code">{code}</p>
-                <p class="expiry">⏰ Expires in 15 minutes</p>
+                <p class="expiry">Expires in 15 minutes</p>
             </div>
             
             <!-- Info Box -->
             <div class="info-box">
                 <p>
-                    <strong>🔒 Security Note:</strong><br>
+                    <strong>Security Note:</strong><br>
                     If you didn't create an account with ChikitsaCloud, please ignore this email. 
                     Your security is our priority.
                 </p>
@@ -164,10 +164,10 @@ def send_verification_email(to_email: str, code: str):
                 Once verified, you'll have access to:
             </p>
             <ul style="color: #64748b; line-height: 1.8; margin: 0 0 20px 20px;">
-                <li>📂 Secure medical record storage</li>
-                <li>👨‍👩‍👧 Family access sharing</li>
-                <li>🏥 Nearby hospital discovery</li>
-                <li>📱 Access from anywhere, anytime</li>
+                <li>Secure medical record storage</li>
+                <li>Family access sharing</li>
+                <li>Nearby hospital discovery</li>
+                <li>Access from anywhere, anytime</li>
             </ul>
         </div>
         
