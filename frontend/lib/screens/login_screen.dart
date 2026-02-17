@@ -53,13 +53,28 @@ class _LoginScreenState extends State<LoginScreen> {
         if (isLogin) {
           Navigator.pushReplacementNamed(context, AppRoutes.home);
         } else {
-          // Bypass verification screen and go direct to profile setup
-          Navigator.pushReplacementNamed(context, AppRoutes.userInfo);
+          // Go to verification screen after signup
+          Navigator.pushReplacementNamed(
+            context, 
+            AppRoutes.verify,
+            arguments: email,
+          );
         }
       } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(authProvider.errorMessage ?? 'Authentication failed')),
-        );
+        final errorMessage = authProvider.errorMessage ?? 'Authentication failed';
+        
+        // If login fails because email is not verified, redirect to verification screen
+        if (isLogin && (errorMessage.contains('Email not verified') || errorMessage.contains('403'))) {
+          Navigator.pushNamed(
+            context, 
+            AppRoutes.verify,
+            arguments: email,
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMessage)),
+          );
+        }
       }
     }
   }

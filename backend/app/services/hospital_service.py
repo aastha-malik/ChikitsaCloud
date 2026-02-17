@@ -6,7 +6,7 @@ from app.core.geo_utils import calculate_haversine_distance
 # External API Constants
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
-USER_AGENT = "ChikitsaCloud_HealthApp/1.0 (contact: admin@chikitsacloud.com)"
+USER_AGENT = "ChikitsaCloud_HealthApp/1.0 (contact: aasthamalik.work@gmail.com)"
 
 async def geocode_location(location_text: str) -> Tuple[float, float]:
     """
