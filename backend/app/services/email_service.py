@@ -124,35 +124,124 @@ def send_password_reset_email(to_email: str, code: str):
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; margin: 0; padding: 0; }}
-        .container {{ max-width: 600px; margin: 0 auto; background-color: #ffffff; }}
-        .header {{ background: linear-gradient(135deg, #FF6B6B 0%, #EE5253 100%); padding: 30px; text-align: center; color: white; }}
-        .content {{ padding: 40px 30px; }}
-        .code-box {{ background: #ffebee; border: 2px solid #FF6B6B; border-radius: 8px; padding: 20px; text-align: center; margin: 30px 0; }}
-        .code {{ font-size: 36px; font-weight: bold; color: #FF6B6B; letter-spacing: 5px; font-family: monospace; margin: 0; }}
-        .footer {{ background-color: #f8fafc; padding: 20px; text-align: center; color: #94a3b8; font-size: 12px; }}
+        body {{ 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background-color: #F8F9FA; 
+            margin: 0; 
+            padding: 0; 
+            -webkit-font-smoothing: antialiased;
+        }}
+        .wrapper {{
+            width: 100%;
+            table-layout: fixed;
+            background-color: #F8F9FA;
+            padding-bottom: 40px;
+        }}
+        .container {{ 
+            max-width: 600px; 
+            margin: 40px auto; 
+            background-color: #ffffff; 
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+        }}
+        .header {{ 
+            background: linear-gradient(135deg, #FF6B6B 0%, #EE5253 100%); 
+            padding: 40px 30px; 
+            text-align: center; 
+            color: white; 
+        }}
+        .header h1 {{
+            margin: 0;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }}
+        .header-bg {{
+            opacity: 0.1;
+            position: absolute;
+            top: 0; right: 0;
+        }}
+        .content {{ 
+            padding: 40px 40px; 
+            text-align: center;
+        }}
+        .icon-container {{
+            width: 64px;
+            height: 64px;
+            background: #FFEBEB;
+            border-radius: 16px;
+            margin: 0 auto 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }}
+        .code-box {{ 
+            background: #FFF5F5; 
+            border: 2px dashed #FF6B6B; 
+            border-radius: 16px; 
+            padding: 30px; 
+            text-align: center; 
+            margin: 32px 0; 
+        }}
+        .code {{ 
+            font-size: 42px; 
+            font-weight: 800; 
+            color: #EE5253; 
+            letter-spacing: 8px; 
+            font-family: 'Courier New', Courier, monospace; 
+            margin: 0; 
+        }}
+        .footer {{ 
+            padding: 30px; 
+            text-align: center; 
+            color: #94A3B8; 
+            font-size: 13px;
+            border-top: 1px solid #F1F5F9;
+        }}
+        .btn {{
+            display: inline-block;
+            padding: 16px 32px;
+            background-color: #EE5253;
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 700;
+            margin-top: 20px;
+        }}
+        .help-text {{
+            color: #64748B;
+            font-size: 14px;
+            line-height: 1.6;
+        }}
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1 style="margin:0;">ChikitsaCloud</h1>
-            <p style="margin:5px 0 0;">Password Reset Request</p>
-        </div>
-        <div class="content">
-            <h2 style="color: #1e293b;">Reset Your Password</h2>
-            <p style="color: #64748b; font-size: 16px;">We received a request to reset your password. Use the code below to proceed.</p>
-            
-            <div class="code-box">
-                <p style="margin:0 0 10px; color:#c62828; font-weight:600; font-size:12px; text-transform:uppercase;">Reset Code</p>
-                <p class="code">{code}</p>
+    <div class="wrapper">
+        <div class="container">
+            <div class="header">
+                <h1>ChikitsaCloud</h1>
+                <p style="margin:8px 0 0; font-weight: 500; opacity: 0.9;">Security Notification</p>
             </div>
-            
-            <p style="color: #64748b; font-size: 14px;">This code expires in 10 minutes. If you didn't request a password reset, you can safely ignore this email.</p>
-        </div>
-        <div class="footer">
-            <p>© 2026 ChikitsaCloud. All rights reserved.</p>
+            <div class="content">
+                <div style="font-size: 48px; margin-bottom: 20px;">🔐</div>
+                <h2 style="color: #1E293B; margin: 0 0 12px; font-size: 24px; font-weight: 700;">Password Reset Request</h2>
+                <p class="help-text">We received a request to reset your password. If you didn't make this request, you can safely ignore this email.</p>
+                
+                <div class="code-box">
+                    <p style="margin:0 0 12px; color:#EE5253; font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing: 1px;">Use this SECURE code to reset</p>
+                    <p class="code">{code}</p>
+                </div>
+                
+                <p class="help-text" style="font-size: 13px;">This code is valid for <b>10 minutes</b> and can only be used once.</p>
+            </div>
+            <div class="footer">
+                <p style="margin: 0 0 10px;">© 2026 ChikitsaCloud Inc. • Secure Health Access</p>
+                <p style="margin: 0;">If you're having trouble, contact our support team.</p>
+            </div>
         </div>
     </div>
 </body>
