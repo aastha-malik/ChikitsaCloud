@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../presentation/providers/theme_provider.dart';
 import '../presentation/providers/auth_provider.dart';
 import '../routes/app_routes.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -52,6 +53,26 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
       );
+    }
+
+    Future<void> _contactSupport() async {
+      final Uri emailLaunchUri = Uri(
+        scheme: 'mailto',
+        path: 'aasthamalik.work@gmail.com',
+        queryParameters: {
+          'subject': 'Support Request - ChikitsaCloud',
+        },
+      );
+      
+      if (await canLaunchUrl(emailLaunchUri)) {
+        await launchUrl(emailLaunchUri);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not open email app')),
+          );
+        }
+      }
     }
 
     return Scaffold(
@@ -117,6 +138,27 @@ class SettingsScreen extends StatelessWidget {
                 onTap: () {
                   Navigator.pushNamed(context, '/reset-password');
                 },
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ListTile(
+                leading: const Icon(Icons.mail_outline, color: AppTheme.primaryColor),
+                title: const Text('Contact Us', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text('Email us at aasthamalik.work@gmail.com', style: Theme.of(context).textTheme.bodyMedium),
+                trailing: Icon(Icons.chevron_right, color: Theme.of(context).textTheme.bodyMedium?.color),
+                onTap: _contactSupport,
               ),
             ),
             const SizedBox(height: 32),
