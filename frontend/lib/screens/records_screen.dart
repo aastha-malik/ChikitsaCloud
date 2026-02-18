@@ -81,9 +81,9 @@ class _RecordsScreenState extends State<RecordsScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: Theme.of(context).dividerColor),
                     borderRadius: BorderRadius.circular(12),
-                    color: Colors.grey.shade50,
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.withOpacity(0.1) : Colors.grey.shade50,
                   ),
                   child: Row(
                     children: [
@@ -162,12 +162,11 @@ class _RecordsScreenState extends State<RecordsScreen> {
     final isViewingOthers = widget.ownerId != null && widget.ownerId != authProvider.userId;
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
         title: Text(isViewingOthers ? "${widget.ownerName}'s Records" : 'Medical Records', 
                    style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: AppTheme.textPrimary,
+        backgroundColor: Theme.of(context).cardColor,
+        foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
         elevation: 0,
         centerTitle: true,
       ),
@@ -236,9 +235,9 @@ class _RecordsScreenState extends State<RecordsScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F7FF),
+        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E3A5F) : const Color(0xFFF0F7FF),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFCCE3FF)),
+        border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2C5282) : const Color(0xFFCCE3FF)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,7 +250,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          Text(insight, style: const TextStyle(color: Color(0xFF1E293B), fontSize: 14)),
+          Text(insight, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 14)),
         ],
       ),
     );

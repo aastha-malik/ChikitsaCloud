@@ -96,8 +96,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
           height: MediaQuery.of(context).size.height * 0.85,
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           ),
           padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
@@ -223,8 +223,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           ),
           padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
@@ -443,11 +443,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final emergencyContacts = List<dynamic>.from(data?['emergency_contacts'] ?? []);
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
         title: const Text('Profile', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: AppTheme.textPrimary,
+        backgroundColor: Theme.of(context).cardColor,
+        foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
         elevation: 0,
         centerTitle: true,
       ),
@@ -473,9 +472,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 12),
               _buildEmergencyContactsSection(emergencyContacts),
               const SizedBox(height: 32),
-              _buildLogoutButton(),
+              _buildSettingsButton(),
               const SizedBox(height: 16),
-              _buildDeleteAccountButton(),
+              _buildLogoutButton(),
               const SizedBox(height: 40),
             ],
           ),
@@ -488,7 +487,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+        Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyLarge?.color)),
         if (onEdit != null)
           IconButton(
             icon: const Icon(Icons.edit_outlined, size: 20, color: AppTheme.primaryColor),
@@ -522,7 +521,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Text(initials, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
           ),
           const SizedBox(height: 16),
-          Text(details['name'] ?? 'Complete Profile', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+          Text(details['name'] ?? 'Complete Profile', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyLarge?.color)),
         ],
       ),
     );
@@ -532,7 +531,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
       ),
@@ -561,9 +560,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         Icon(icon, size: 20, color: AppTheme.primaryColor),
         const SizedBox(width: 12),
-        Text(label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
+        Text(label, style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 14)),
         const Spacer(),
-        Text(value, style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
+        Text(value, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.w600, fontSize: 14)),
       ],
     );
   }
@@ -572,7 +571,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(24)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -621,8 +620,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
-        child: const Center(child: Text('No emergency contacts added', style: TextStyle(color: AppTheme.textSecondary))),
+        decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(24)),
+        child: Center(child: Text('No emergency contacts added', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color))),
       );
     }
 
@@ -631,7 +630,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white, 
+          color: Theme.of(context).cardColor, 
           borderRadius: BorderRadius.circular(20),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 4, offset: const Offset(0, 2))],
         ),
@@ -648,7 +647,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Text(contact['name'] ?? 'N/A', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   Text('${contact['relation'] ?? 'N/A'} • ${contact['phone_country_code'] ?? ''} ${contact['phone_number'] ?? ''}', 
-                       style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                   style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 13)),
                 ],
               ),
             ),
@@ -666,10 +665,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildSettingsButton() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(24)),
+      child: ListTile(
+        onTap: () {
+          Navigator.pushNamed(context, '/settings');
+        },
+        leading: const Icon(Icons.settings_outlined, color: AppTheme.primaryColor),
+        title: Text('Settings', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyLarge?.color)),
+        trailing: Icon(Icons.chevron_right, color: Theme.of(context).textTheme.bodyMedium?.color),
+      ),
+    );
+  }
+
   Widget _buildLogoutButton() {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(24)),
       child: ListTile(
         onTap: () async {
           await context.read<AuthProvider>().logout();
@@ -678,58 +692,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         leading: const Icon(Icons.logout_outlined, color: Colors.red),
         title: const Text('Log Out', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
         trailing: const Icon(Icons.chevron_right, color: Colors.red),
-      ),
-    );
-  }
-
-  Widget _buildDeleteAccountButton() {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFFFEF2F2), 
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFFECACA))
-      ),
-      child: ListTile(
-        onTap: _confirmDeleteAccount,
-        leading: const Icon(Icons.delete_forever_outlined, color: Colors.red),
-        title: const Text('Delete Account', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-        trailing: const Icon(Icons.chevron_right, color: Colors.red),
-      ),
-    );
-  }
-
-  void _confirmDeleteAccount() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Account', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-        content: const Text(
-          'Are you sure you want to permanently delete your account? This action cannot be undone and all your data including medical records will be lost.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context), 
-            child: const Text('Cancel', style: TextStyle(color: Colors.black))
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context); // Close dialog
-              
-              final authProvider = context.read<AuthProvider>();
-              final messenger = ScaffoldMessenger.of(context);
-              
-              final success = await authProvider.deleteAccount();
-              if (success && mounted) {
-                Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-                messenger.showSnackBar(const SnackBar(content: Text('Account deleted successfully')));
-              } else if (mounted) {
-                 messenger.showSnackBar(SnackBar(content: Text(authProvider.errorMessage ?? 'Failed to delete account')));
-              }
-            },
-            child: const Text('Delete Forever', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-          ),
-        ],
       ),
     );
   }

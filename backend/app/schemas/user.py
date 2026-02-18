@@ -15,6 +15,7 @@ class UserProfileBase(BaseModel):
     weight: Optional[float] = None
     country: Optional[str] = None
     allergies: List[str] = []
+    theme_preference: Optional[str] = "light"
 
 class UserProfileCreate(UserProfileBase):
     pass
@@ -57,6 +58,7 @@ class EmergencyContactUpdate(BaseModel):
 
 # --- Consolidated Profile Schema ---
 class ConsolidatedProfileOut(BaseModel):
+    email: str
     personal_details: UserProfileOut
     emergency_contacts: List[EmergencyContactOut]
     allergies: List[str]

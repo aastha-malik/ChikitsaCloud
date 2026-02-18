@@ -30,7 +30,6 @@ class _FamilyScreenState extends State<FamilyScreen> {
     final familyProvider = context.watch<FamilyProvider>();
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
       body: Column(
         children: [
           Padding(
@@ -38,7 +37,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: Colors.grey.shade200,
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.withOpacity(0.1) : Colors.grey.shade200,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -65,7 +64,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: active ? Colors.white : Colors.transparent,
+            color: active ? Theme.of(context).cardColor : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             boxShadow: active ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4)] : null,
           ),
@@ -74,7 +73,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontWeight: active ? FontWeight.bold : FontWeight.normal,
-              color: active ? AppTheme.primaryColor : Colors.grey.shade600,
+              color: active ? AppTheme.primaryColor : (Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade400 : Colors.grey.shade600),
             ),
           ),
         ),
@@ -90,7 +89,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(32),
               boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20)],
             ),
@@ -108,10 +107,10 @@ class _FamilyScreenState extends State<FamilyScreen> {
                 const SizedBox(height: 24),
                 const Text('Share Medical Access', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Show this QR code to a family member to grant them read-only access to your records.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppTheme.textSecondary),
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
                 ),
               ],
             ),
@@ -239,21 +238,21 @@ class _FamilyScreenState extends State<FamilyScreen> {
         _buildSectionTitle('PENDING REQUESTS'),
         const SizedBox(height: 12),
         if (provider.pendingRequests.isEmpty)
-          const Text('No pending requests', style: TextStyle(color: Colors.grey))
+          Text('No pending requests', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color))
         else
           ...provider.pendingRequests.map((r) => _buildRequestCard(r, provider)),
         const SizedBox(height: 32),
         _buildSectionTitle('ACTIVE ACCESS (YOU GRANTED)'),
         const SizedBox(height: 12),
         if (provider.activeAccess.isEmpty)
-          const Text('Not sharing access with anyone', style: TextStyle(color: Colors.grey))
+          Text('Not sharing access with anyone', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color))
         else
           ...provider.activeAccess.map((a) => _buildAccessCard(a, provider, true)),
         const SizedBox(height: 32),
         _buildSectionTitle('SHARED WITH ME (READ-ONLY)'),
         const SizedBox(height: 12),
         if (provider.sharedWithMe.isEmpty)
-          const Text('No one has shared access with you', style: TextStyle(color: Colors.grey))
+          Text('No one has shared access with you', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color))
         else
           ...provider.sharedWithMe.map((a) => _buildAccessCard(a, provider, false)),
       ],
@@ -268,7 +267,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(20)),
       child: Row(
         children: [
           CircleAvatar(backgroundColor: Colors.orange.shade50, child: Text(r['requester_name']?[0] ?? '?', style: const TextStyle(color: Colors.orange))),
@@ -278,7 +277,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(r['requester_name'] ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(r['requester_email'] ?? 'N/A', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                Text(r['requester_email'] ?? 'N/A', style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color)),
               ],
             ),
           ),
@@ -303,7 +302,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(20)),
       child: Row(
         children: [
           CircleAvatar(backgroundColor: AppTheme.primaryColor.withOpacity(0.1), child: Text(name?[0] ?? '?')),
@@ -313,7 +312,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(name ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(email ?? 'N/A', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                Text(email ?? 'N/A', style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color)),
               ],
             ),
           ),
@@ -366,8 +365,8 @@ class _QRScannerPageState extends State<QRScannerPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Scan QR Code'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: Theme.of(context).cardColor,
+        foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),

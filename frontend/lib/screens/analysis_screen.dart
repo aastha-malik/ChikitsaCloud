@@ -78,8 +78,8 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         maxChildSize: 0.9,
         minChildSize: 0.5,
         builder: (_, controller) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           ),
           padding: const EdgeInsets.all(24),
@@ -97,28 +97,28 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Analysis Results',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 result['summary'] ?? '',
-                style: const TextStyle(color: AppTheme.textSecondary),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
               ),
               const SizedBox(height: 24),
               _buildRiskIndicator(result['overall_health_risk']),
               const SizedBox(height: 32),
-              const Text(
+              Text(
                 'Parameters Detail',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
               ),
               const SizedBox(height: 16),
@@ -170,9 +170,9 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Overall Health Risk',
-                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 14),
                 ),
                 Text(
                   risk ?? 'Unknown',
@@ -196,7 +196,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.backgroundColor,
+        color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.withOpacity(0.1) : AppTheme.backgroundColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -220,7 +220,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
             children: [
               Text(
                 'Value: ${item['value']} ${item['unit']}',
-                style: const TextStyle(color: AppTheme.textSecondary),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
               ),
               const Spacer(),
               Text(
@@ -252,7 +252,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         title: const Text('Basic Abnormalities'),
         elevation: 0,
         backgroundColor: Colors.transparent,
-        foregroundColor: AppTheme.textPrimary,
+        foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
@@ -274,18 +274,18 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
             children: [
               _buildUserContext(profile),
               const SizedBox(height: 32),
-              const Text(
+              Text(
                 'Enter Lab Results',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Enter your recent medical parameters for AI analysis.',
-                style: TextStyle(color: AppTheme.textSecondary),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
               ),
               const SizedBox(height: 24),
               
@@ -392,7 +392,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
               ),
               Text(
                 "Height: ${profile['height'] ?? '--'} cm | Weight: ${profile['weight'] ?? '--'} kg",
-                style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 13),
               ),
             ],
           ),

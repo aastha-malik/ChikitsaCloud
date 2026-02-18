@@ -11,6 +11,7 @@ class AuthProvider extends ChangeNotifier {
   String? _errorMessage;
   bool _isAuthenticated = false;
   String? _userId;
+  String? _userEmail;
 
   AuthProvider(this._authRepository);
 
@@ -18,6 +19,7 @@ class AuthProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _isAuthenticated;
   String? get userId => _userId;
+  String? get userEmail => _userEmail;
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -64,8 +66,10 @@ class AuthProvider extends ChangeNotifier {
 
       await _storage.write(key: 'auth_token', value: token);
       await _storage.write(key: 'user_id', value: userId);
+      await _storage.write(key: 'user_email', value: email);
 
       _userId = userId;
+      _userEmail = email;
       _isAuthenticated = true;
       _setLoading(false);
       return true;
@@ -96,8 +100,10 @@ class AuthProvider extends ChangeNotifier {
       
       await _storage.write(key: 'auth_token', value: token);
       await _storage.write(key: 'user_id', value: userId);
+      await _storage.write(key: 'user_email', value: email);
       
       _userId = userId;
+      _userEmail = email;
       _isAuthenticated = true;
       _setLoading(false);
       return true;
@@ -166,10 +172,60 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> forgotPassword(String email) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      await _authRepository.forgotPassword(email);
+      _setLoading(false);
+      return true;
+    } on DioException catch (e) {
+      String errorMessage = 'Failed to send reset code';
+      if (e.response?.data is Map) {
+         errorMessage = e.response?.data['detail'] ?? errorMessage;
+      } else if (e.response?.data is String) {
+         errorMessage = e.response?.data;
+      }
+      _setError(errorMessage);
+      _setLoading(false);
+      return false;
+    } catch (e) {
+      _setError('An unexpected error occurred');
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  Future<bool> resetPassword(String email, String code, String newPassword) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      await _authRepository.resetPassword(email, code, newPassword);
+      _setLoading(false);
+      return true;
+    } on DioException catch (e) {
+      String errorMessage = 'Password reset failed';
+      if (e.response?.data is Map) {
+         errorMessage = e.response?.data['detail'] ?? errorMessage;
+      } else if (e.response?.data is String) {
+         errorMessage = e.response?.data;
+      }
+      _setError(errorMessage);
+      _setLoading(false);
+      return false;
+    } catch (e) {
+      _setError('An unexpected error occurred');
+      _setLoading(false);
+      return false;
+    }
+  }
+
   Future<void> logout() async {
     await _storage.delete(key: 'auth_token');
     await _storage.delete(key: 'user_id');
+    await _storage.delete(key: 'user_email');
     _userId = null;
+    _userEmail = null;
     _isAuthenticated = false;
     notifyListeners();
   }
@@ -177,8 +233,10 @@ class AuthProvider extends ChangeNotifier {
   Future<void> checkAuthStatus() async {
     final token = await _storage.read(key: 'auth_token');
     final userId = await _storage.read(key: 'user_id');
+    final userEmail = await _storage.read(key: 'user_email');
     if (token != null && userId != null) {
       _userId = userId;
+      _userEmail = userEmail;
       _isAuthenticated = true;
       notifyListeners();
     }

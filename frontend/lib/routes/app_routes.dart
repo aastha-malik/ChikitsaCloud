@@ -5,12 +5,17 @@ import '../screens/verification_screen.dart';
 import '../screens/analysis_screen.dart';
 import '../screens/user_info_screen.dart';
 
+import '../screens/settings_screen.dart';
+import '../screens/reset_password_screen.dart';
+
 class AppRoutes {
   static const String login = '/login';
   static const String home = '/home';
   static const String verify = '/verify';
   static const String analysis = '/analysis';
   static const String userInfo = '/user-info';
+  static const String settings = '/settings';
+  static const String resetPassword = '/reset-password';
 
   static Map<String, WidgetBuilder> get routes => {
         login: (context) => const LoginScreen(),
@@ -21,5 +26,7 @@ class AppRoutes {
         },
         analysis: (context) => const AnalysisScreen(),
         userInfo: (context) => const UserInfoScreen(),
+        settings: (context) => const SettingsScreen(),
+        resetPassword: (context) => const ResetPasswordScreen(),
       };
 }

@@ -51,6 +51,7 @@ def get_full_profile(
     emergency_contacts = user_service.get_emergency_contacts(db, current_user.id)
     
     return {
+        "email": current_user.email,
         "personal_details": profile,
         "emergency_contacts": emergency_contacts,
         "allergies": profile.allergies
@@ -72,6 +73,7 @@ def update_full_profile(
     emergency_contacts = user_service.get_emergency_contacts(db, current_user.id)
     
     return {
+        "email": current_user.email,
         "personal_details": profile,
         "emergency_contacts": emergency_contacts,
         "allergies": profile.allergies

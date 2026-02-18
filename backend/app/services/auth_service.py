@@ -209,3 +209,60 @@ def delete_user_account(db: Session, user_id):
         raise HTTPException(status_code=500, detail=f"Final deletion failed: {str(e)}")
         
     return {"message": "Account deleted successfully"}
+
+def request_password_reset(db: Session, email: str):
+    email = email.strip().lower()
+    user = db.query(AuthUser).filter(AuthUser.email == email).first()
+    
+    if not user:
+        # Don't reveal user existence
+        return {"message": "If this email is registered, a reset code has been sent."}
+    
+    if user.auth_provider != "email":
+        return {"message": "Please login with your social account"}
+
+    # Generate Code
+    code = ''.join(random.choices(string.digits, k=6))
+    print(f"[DEBUG] Generated RESET code for {email}: {code}")
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
+    
+    # Store in same columns as verification for now, or add new ones?
+    # Reusing verification columns for simplicity as they serve same purpose of OTP
+    user.email_verification_code = code
+    user.email_verification_expires_at = expires_at
+    db.commit()
+    
+    try:
+        # Reusing the existing email function but should ideally be specific template
+        email_service.send_password_reset_email(email, code)
+    except Exception as e:
+        print(f"[CRITICAL] Backend failed to send reset email. MANUAL CODE for {email} is: {code}")
+        
+    return {"message": "Reset code sent successfully"}
+
+def confirm_password_reset(db: Session, email: str, code: str, new_password: str):
+    email = email.strip().lower()
+    user = db.query(AuthUser).filter(AuthUser.email == email).first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    # Validate code
+    if user.email_verification_code != code:
+        raise HTTPException(status_code=400, detail="Invalid reset code")
+        
+    # Validate expiry
+    if user.email_verification_expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Reset code expired")
+        
+    # Update password
+    hashed_password = security.get_password_hash(new_password)
+    user.password_hash = hashed_password
+    
+    # Clear code
+    user.email_verification_code = None
+    user.email_verification_expires_at = None
+    
+    db.commit()
+    
+    return {"message": "Password reset successfully"}

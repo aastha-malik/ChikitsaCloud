@@ -23,9 +23,9 @@ class RecordTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
@@ -40,26 +40,26 @@ class RecordTile extends StatelessWidget {
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.withOpacity(0.1) : const Color(0xFFF1F5F9),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(icon, color: const Color(0xFF64748B)),
+          child: Icon(icon, color: Theme.of(context).textTheme.bodyMedium?.color),
         ),
         title: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1E293B),
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Text(
             '$date • $type',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: Color(0xFF64748B),
+              color: Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
         ),

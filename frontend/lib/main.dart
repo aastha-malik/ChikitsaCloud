@@ -13,6 +13,7 @@ import 'presentation/providers/analysis_provider.dart';
 import 'presentation/providers/profile_provider.dart';
 import 'presentation/providers/family_provider.dart';
 import 'presentation/providers/hospital_provider.dart';
+import 'presentation/providers/theme_provider.dart';
 
 void main() {
   final apiClient = ApiClient();
@@ -30,6 +31,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => ProfileProvider(profileRepository)),
         ChangeNotifierProvider(create: (_) => FamilyProvider()),
         ChangeNotifierProvider(create: (_) => HospitalProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider(repository: profileRepository)),
       ],
       child: const MyApp(),
     ),
@@ -41,10 +43,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
     return MaterialApp(
       title: 'ChikitsaCloud',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeProvider.themeMode,
       initialRoute: AppRoutes.login,
       routes: AppRoutes.routes,
     );

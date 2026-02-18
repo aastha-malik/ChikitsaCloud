@@ -29,6 +29,7 @@ def migrate():
         add_column("user_profiles", "height", "NUMERIC")
         add_column("user_profiles", "weight", "NUMERIC")
         add_column("user_profiles", "country", "VARCHAR")
+        add_column("user_profiles", "theme_preference", "VARCHAR DEFAULT 'light'")
 
         # medical_records columns
         add_column("medical_records", "title", "VARCHAR")

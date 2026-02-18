@@ -86,15 +86,21 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFE0F2F1), // Very light teal
-              Color(0xFFECEFF1), // Light blue grey
-              Color(0xFFE0F7FA), // Light cyan
-            ],
+            colors: Theme.of(context).brightness == Brightness.dark
+                ? [
+                    const Color(0xFF101820), // Extremely dark blue/black
+                    const Color(0xFF1A1A1A),
+                    const Color(0xFF121212),
+                  ]
+                : [
+                    const Color(0xFFE0F2F1), // Very light teal
+                    const Color(0xFFECEFF1), // Light blue grey
+                    const Color(0xFFE0F7FA), // Light cyan
+                  ],
           ),
         ),
         child: Center(
@@ -104,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
               constraints: const BoxConstraints(maxWidth: 400),
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
@@ -123,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.withOpacity(0.1) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
@@ -153,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       "Your personal medical history, secure and accessible.",
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppTheme.textSecondary,
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -214,6 +220,20 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                       ),
                     ],
+                    if (isLogin)
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context, 
+                                '/reset-password',
+                                arguments: _emailController.text.trim(),
+                              );
+                            },
+                            child: const Text('Forgot Password?'),
+                          ),
+                        ),
                     const SizedBox(height: 32),
                     
                     // Action Button
@@ -230,7 +250,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontSize: 12,
-                        color: AppTheme.textSecondary.withOpacity(0.7),
+                        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                       ),
                     ),
                   ],

@@ -23,9 +23,9 @@ class QuickAccessCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.withOpacity(0.1)),
+            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
@@ -49,10 +49,10 @@ class QuickAccessCard extends StatelessWidget {
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14, // Slightly smaller to accommodate 3 cards
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1E293B),
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                   height: 1.2,
                 ),
               ),

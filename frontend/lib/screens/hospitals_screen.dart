@@ -19,19 +19,18 @@ class _HospitalsScreenState extends State<HospitalsScreen> {
     final provider = context.watch<HospitalProvider>();
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(24, 24, 24, 16),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
               child: Text(
                 'Nearby Hospitals',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
               ),
             ),
@@ -65,8 +64,8 @@ class _HospitalsScreenState extends State<HospitalsScreen> {
         icon: const Icon(Icons.near_me_outlined, size: 20),
         label: const Text('Use GPS'),
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppTheme.textPrimary,
-          side: const BorderSide(color: Color(0xFFE2E8F0)),
+          foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
+          side: BorderSide(color: Theme.of(context).dividerColor),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(horizontal: 16),
         ),
@@ -78,9 +77,9 @@ class _HospitalsScreenState extends State<HospitalsScreen> {
     return Container(
       height: 50,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
@@ -128,7 +127,7 @@ class _HospitalsScreenState extends State<HospitalsScreen> {
               Text(
                 provider.errorMessage!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppTheme.textSecondary),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
               ),
             ],
           ),
@@ -171,7 +170,7 @@ class _HospitalsScreenState extends State<HospitalsScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -190,25 +189,25 @@ class _HospitalsScreenState extends State<HospitalsScreen> {
               Expanded(
                 child: Text(
                   name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.withOpacity(0.1) : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   '$distance km',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.textSecondary,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
                   ),
                 ),
               ),
@@ -217,9 +216,9 @@ class _HospitalsScreenState extends State<HospitalsScreen> {
           const SizedBox(height: 4),
           Text(
             address,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppTheme.textSecondary,
+              color: Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
           const SizedBox(height: 20),
@@ -231,9 +230,9 @@ class _HospitalsScreenState extends State<HospitalsScreen> {
                   icon: const Icon(Icons.phone_outlined, size: 18),
                   label: Text(phone ?? 'No phone'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: AppTheme.textPrimary,
-                    side: const BorderSide(color: Color(0xFFE2E8F0)),
+                    backgroundColor: Theme.of(context).cardColor,
+                    foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
+                    side: BorderSide(color: Theme.of(context).dividerColor),
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),

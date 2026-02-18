@@ -46,6 +46,7 @@ class UserProfile(Base):
     country = Column(String, nullable=True)
     
     allergies = Column(ARRAY(String), default=[])
+    theme_preference = Column(String, default="light")
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())

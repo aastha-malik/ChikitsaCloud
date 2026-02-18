@@ -58,3 +58,19 @@ def delete_account(
     Deletes the current user's account and all associated data.
     """
     return auth_service.delete_user_account(db, current_user.id)
+
+@router.post("/forgot-password")
+def forgot_password(data: ResendVerification, db: Session = Depends(get_db)):
+    """
+    Initiate password reset flow.
+    """
+    return auth_service.request_password_reset(db, data.email)
+
+from app.schemas.auth import ResetPasswordRequest
+
+@router.post("/reset-password")
+def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
+    """
+    Confirm password reset with code.
+    """
+    return auth_service.confirm_password_reset(db, data.email, data.code, data.new_password)

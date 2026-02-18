@@ -10,7 +10,9 @@ import 'profile_screen.dart';
 import 'family_screen.dart';
 import 'records_screen.dart';
 import 'hospitals_screen.dart';
+import '../presentation/providers/theme_provider.dart';
 import 'analysis_screen.dart';
+import '../theme/app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,11 +27,20 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final authProvider = context.read<AuthProvider>();
       if (authProvider.userId != null) {
         context.read<ReportsProvider>().fetchRecords();
-        context.read<ProfileProvider>().fetchProfile();
+        await context.read<ProfileProvider>().fetchProfile();
+        
+        if (mounted) {
+          final profile = context.read<ProfileProvider>().profileData;
+          final themePref = profile?['personal_details']?['theme_preference'];
+          if (themePref != null) {
+             final mode = themePref == 'dark' ? ThemeMode.dark : ThemeMode.light;
+             context.read<ThemeProvider>().setTheme(mode, save: false);
+          }
+        }
       }
     });
   }
@@ -81,7 +92,6 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
       body: IndexedStack(
         index: _selectedIndex,
         children: _bodies,
@@ -127,21 +137,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       QuickAccessCard(
                         title: 'Upload Record',
                         icon: Icons.note_add_outlined,
-                        iconColor: Colors.blue,
+                        iconColor: AppTheme.accentBlue,
                         onTap: _handleUpload,
                       ),
                       const SizedBox(width: 16),
                       QuickAccessCard(
                         title: 'Share Access',
                         icon: Icons.share_location_outlined,
-                        iconColor: Colors.purple,
+                        iconColor: AppTheme.accentPurple,
                         onTap: () => setState(() => _selectedIndex = 2), // Switch to Family tab
                       ),
                       const SizedBox(width: 16),
                       QuickAccessCard(
                         title: 'Health AI',
                         icon: Icons.analytics_outlined,
-                        iconColor: Colors.orange,
+                        iconColor: Colors.orange, // Keep orange as is or add to AppTheme if needed
                         onTap: () {
                           Navigator.push(
                             context,
@@ -262,11 +272,11 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withOpacity(0.05),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -306,10 +316,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF1E293B),
+        color: Theme.of(context).textTheme.bodyLarge?.color,
       ),
     );
   }
@@ -327,13 +337,13 @@ class _InfoItem extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(color: Color(0xFF64748B), fontSize: 14),
+          style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 14),
         ),
         const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(
-            color: Color(0xFF1E293B),
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodyLarge?.color,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -351,7 +361,7 @@ class _VerticalDivider extends StatelessWidget {
     return Container(
       height: 40,
       width: 1,
-      color: const Color(0xFFE2E8F0),
+      color: Theme.of(context).dividerColor,
     );
   }
 }
