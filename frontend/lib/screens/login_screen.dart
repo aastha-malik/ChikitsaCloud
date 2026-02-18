@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/toggle_switch.dart';
-import '../presentation/providers/auth_provider.dart';
-import '../routes/app_routes.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,64 +16,27 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController(text: 'sarah@example.com');
   final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleAuth() async {
+  void _handleAuth() {
     if (_formKey.currentState!.validate()) {
-      if (!isLogin && _passwordController.text != _confirmPasswordController.text) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Passwords do not match')),
-        );
-        return;
-      }
-
-      final authProvider = context.read<AuthProvider>();
-      final email = _emailController.text.trim();
-      final password = _passwordController.text.trim();
-
-      bool success;
-      if (isLogin) {
-        success = await authProvider.login(email, password);
-      } else {
-        success = await authProvider.signup(email, password);
-      }
-
-      if (success && mounted) {
-        if (isLogin) {
-          // Successful login (verified user)
-          Navigator.pushReplacementNamed(context, AppRoutes.home);
-        } else {
-          // Successful signup (new user, needs verification)
-          Navigator.pushReplacementNamed(
-            context, 
-            AppRoutes.verify,
-            arguments: email,
-          );
+      // Mock authentication
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(isLogin ? 'Logging in...' : 'Signing up...')),
+      );
+      
+      // Simulate delay then navigate
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) {
+           Navigator.pushReplacementNamed(context, '/home');
         }
-      } else if (mounted) {
-        final errorMessage = authProvider.errorMessage ?? 'Authentication failed';
-        
-        // If login (sign in) fails specifically because email is not verified
-        if (isLogin && errorMessage.toLowerCase().contains('email not verified')) {
-          Navigator.pushReplacementNamed(
-            context, 
-            AppRoutes.verify,
-            arguments: email,
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMessage)),
-          );
-        }
-      }
+      });
     }
   }
 
@@ -86,21 +46,15 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: Theme.of(context).brightness == Brightness.dark
-                ? [
-                    const Color(0xFF101820), // Extremely dark blue/black
-                    const Color(0xFF1A1A1A),
-                    const Color(0xFF121212),
-                  ]
-                : [
-                    const Color(0xFFE0F2F1), // Very light teal
-                    const Color(0xFFECEFF1), // Light blue grey
-                    const Color(0xFFE0F7FA), // Light cyan
-                  ],
+            colors: [
+              Color(0xFFE0F2F1), // Very light teal
+              Color(0xFFECEFF1), // Light blue grey
+              Color(0xFFE0F7FA), // Light cyan
+            ],
           ),
         ),
         child: Center(
@@ -110,11 +64,11 @@ class _LoginScreenState extends State<LoginScreen> {
               constraints: const BoxConstraints(maxWidth: 400),
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -129,20 +83,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.withOpacity(0.1) : Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Image.asset(
-                        'assets/logo.png',
-                        width: 48,
-                        height: 48,
+                      child: const Icon(
+                        Icons.push_pin,
+                        color: AppTheme.primaryColor,
+                        size: 24,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -159,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       "Your personal medical history, secure and accessible.",
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                        color: AppTheme.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -197,50 +144,106 @@ class _LoginScreenState extends State<LoginScreen> {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your password';
                         }
-                        if (!isLogin && value.length < 6) {
-                          return 'Password must be at least 6 characters';
-                        }
                         return null;
                       },
                     ),
-                    if (!isLogin) ...[
-                      const SizedBox(height: 16),
-                      CustomTextField(
-                        label: "Confirm Password",
-                        controller: _confirmPasswordController,
-                        obscureText: true,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please confirm your password';
-                          }
-                          if (value != _passwordController.text) {
-                            return 'Passwords do not match';
-                          }
-                          return null;
-                        },
-                      ),
-                    ],
+                    const SizedBox(height: 8),
                     if (isLogin)
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                context, 
-                                '/reset-password',
-                                arguments: _emailController.text.trim(),
-                              );
-                            },
-                            child: const Text('Forgot Password?'),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/forgot_password');
+                          },
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            "Forgot Password?",
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: AppTheme.primaryColor,
+                                  fontWeight: FontWeight.w500,
+                                ),
                           ),
                         ),
-                    const SizedBox(height: 32),
+                      ),
+                    const SizedBox(height: 24),
                     
                     // Action Button
                     PrimaryButton(
                       text: isLogin ? "Login" : "Create Account",
-                      isLoading: context.watch<AuthProvider>().isLoading,
-                      onPressed: _handleAuth,
+                      onPressed: _isLoading ? null : _handleAuth,
+                      isLoading: _isLoading,
+                    ),
+                    const SizedBox(height: 24),
+
+                    // OR Divider
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Divider(
+                            thickness: 1,
+                            color: Color(0xFFE2E8F0),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            "OR",
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textSecondary,
+                                ),
+                          ),
+                        ),
+                        const Expanded(
+                          child: Divider(
+                            thickness: 1,
+                            color: Color(0xFFE2E8F0),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Google Login Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Google login tapped'),
+                            ),
+                          );
+                        },
+                        icon: Image.asset(
+                          'assets/icons/google_logo.png',
+                          height: 20,
+                        ),
+                        label: const Text(
+                          "Login with Google",
+                          style: TextStyle(
+                            color: Color(0xFF1F2933),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 24),
                     
@@ -250,7 +253,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontSize: 12,
-                        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                        color: AppTheme.textSecondary.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
