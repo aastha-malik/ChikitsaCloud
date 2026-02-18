@@ -5,6 +5,7 @@ import '../presentation/providers/theme_provider.dart';
 import '../presentation/providers/auth_provider.dart';
 import '../routes/app_routes.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -73,6 +74,74 @@ class SettingsScreen extends StatelessWidget {
           );
         }
       }
+    }
+
+    void _showContactOptions() {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Theme.of(context).cardColor,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        builder: (context) => Container(
+          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.bottom(24),
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const Text(
+                'Contact Support',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'How would you like to reach us?',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 32),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: AppTheme.primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.email_outlined, color: AppTheme.primaryColor),
+                ),
+                title: const Text('Send Email', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('Open your default email app'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _contactSupport();
+                },
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.copy_outlined, color: Colors.blue),
+                ),
+                title: const Text('Copy Email Address', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('aasthamalik.work@gmail.com'),
+                onTap: () {
+                  Clipboard.setData(const ClipboardData(text: 'aasthamalik.work@gmail.com'));
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Email address copied to clipboard!'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     return Scaffold(
@@ -158,7 +227,7 @@ class SettingsScreen extends StatelessWidget {
                 title: const Text('Contact Us', style: TextStyle(fontWeight: FontWeight.w600)),
                 subtitle: Text('Email us at aasthamalik.work@gmail.com', style: Theme.of(context).textTheme.bodyMedium),
                 trailing: Icon(Icons.chevron_right, color: Theme.of(context).textTheme.bodyMedium?.color),
-                onTap: _contactSupport,
+                onTap: _showContactOptions,
               ),
             ),
             const SizedBox(height: 32),
