@@ -1,11 +1,10 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_appauth/flutter_appauth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../data/repositories/auth_repository.dart';
-import '../../../config/secrets.dart';
+import '../../config/secrets.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthRepository _authRepository;
@@ -17,13 +16,16 @@ class AuthProvider extends ChangeNotifier {
   String? _userId;
   String? _userEmail;
 
-  // ─── Google OAuth2 Web Client ─────────────────────────────────────────────
-  // Credentials live in lib/config/secrets.dart (gitignored — never committed)
-  static const _googleClientId = GoogleSecrets.clientId;
-  static const _googleClientSecret = GoogleSecrets.clientSecret;
-  static const _redirectUri = 'com.example.chikitsa_cloud:/oauth2redirect';
-  // ─────────────────────────────────────────────────────────────────────────
-  final FlutterAppAuth _appAuth = const FlutterAppAuth();
+  // ─── Google OAuth2 Native (using google_sign_in + google-services.json) ────
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: <String>[
+      'email',
+      'profile',
+      'openid',
+    ],
+    // serverClientId is REQUIRED to get an idToken for the backend
+    serverClientId: GoogleSecrets.clientId,
+  );
 
   AuthProvider(this._authRepository);
 
@@ -48,7 +50,6 @@ class AuthProvider extends ChangeNotifier {
     _setError(null);
     try {
       await _authRepository.signup(email, password);
-      // We don't log in automatically anymore because email needs verification
       _setLoading(false);
       return true;
     } on DioException catch (e) {
@@ -140,30 +141,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> resendVerification(String email) async {
-    _setLoading(true);
-    _setError(null);
-    try {
-      await _authRepository.resendVerification(email);
-      _setLoading(false);
-      return true;
-    } on DioException catch (e) {
-      String errorMessage = 'Failed to resend code';
-      if (e.response?.data is Map) {
-        errorMessage = e.response?.data['detail'] ?? errorMessage;
-      } else if (e.response?.data is String) {
-        errorMessage = e.response?.data;
-      }
-      _setError(errorMessage);
-      _setLoading(false);
-      return false;
-    } catch (e) {
-      _setError('An unexpected error occurred');
-      _setLoading(false);
-      return false;
-    }
-  }
-
   Future<bool> deleteAccount() async {
     _setLoading(true);
     _setError(null);
@@ -236,6 +213,28 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> resendVerification(String email) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      await _authRepository.resendVerification(email);
+      _setLoading(false);
+      return true;
+    } on DioException catch (e) {
+      String errorMessage = 'Failed to resend code';
+      if (e.response?.data is Map) {
+        errorMessage = e.response?.data['detail'] ?? errorMessage;
+      }
+      _setError(errorMessage);
+      _setLoading(false);
+      return false;
+    } catch (e) {
+      _setError('An unexpected error occurred');
+      _setLoading(false);
+      return false;
+    }
+  }
+
   Future<void> logout() async {
     await _storage.delete(key: 'auth_token');
     await _storage.delete(key: 'user_id');
@@ -250,54 +249,34 @@ class AuthProvider extends ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
-      debugPrint('[DEBUG] Starting Google OAuth2 flow via AppAuth...');
+      debugPrint('[DEBUG] Starting Google Sign-In via Native SDK...');
 
-      final AuthorizationTokenResponse? result =
-          await _appAuth.authorizeAndExchangeCode(
-        AuthorizationTokenRequest(
-          _googleClientId,
-          _redirectUri,
-          clientSecret: _googleClientSecret,
-          serviceConfiguration: const AuthorizationServiceConfiguration(
-            authorizationEndpoint:
-                'https://accounts.google.com/o/oauth2/v2/auth',
-            tokenEndpoint: 'https://oauth2.googleapis.com/token',
-          ),
-          scopes: ['openid', 'email', 'profile'],
-        ),
-      );
-
-      if (result == null || result.idToken == null) {
-        debugPrint('[ERROR] AppAuth returned null or no ID token');
-        _setError('Google sign in was cancelled or failed.');
+      // 1. Sign in
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        debugPrint('[DEBUG] Google Sign-In cancelled by user');
         _setLoading(false);
         return false;
       }
 
-      final idToken = result.idToken!;
-      debugPrint('[DEBUG] Got ID Token, sending to backend...');
+      // 2. Get tokens
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
 
-      // Decode email from the ID token JWT payload (no library needed)
-      String email = '';
-      try {
-        final parts = idToken.split('.');
-        if (parts.length == 3) {
-          final payload = parts[1];
-          // Base64 padding fix
-          final normalized = base64Url.normalize(payload);
-          final decoded = utf8.decode(base64Url.decode(normalized));
-          final claims = json.decode(decoded) as Map<String, dynamic>;
-          email = claims['email'] ?? '';
-          debugPrint('[DEBUG] Extracted email from ID token: $email');
-        }
-      } catch (e) {
-        debugPrint('[WARN] Could not decode email from ID token: $e');
+      if (idToken == null) {
+        debugPrint('[ERROR] Could not get ID Token from Google Sign-In');
+        _setError('Failed to get security token from Google.');
+        _setLoading(false);
+        return false;
       }
 
-      // Send ID token to our FastAPI backend for verification
+      debugPrint('[DEBUG] Got ID Token, sending to backend...');
+
+      // 3. Send to backend
       final response = await _authRepository.googleLogin(idToken);
       final token = response.data['access_token'];
       final userId = response.data['user_id'];
+      final email = googleUser.email;
 
       await _storage.write(key: 'auth_token', value: token);
       await _storage.write(key: 'user_id', value: userId);

@@ -271,15 +271,31 @@ def confirm_password_reset(db: Session, email: str, code: str, new_password: str
     return {"message": "Password reset successfully"}
 
 def google_login(db: Session, token: str):
-    try:
-        # Verify the ID token
-        # settings.GOOGLE_CLIENT_ID can be empty string if validation should bypass audience check locally
-        # but in production it's critical.
-        idinfo = id_token.verify_oauth2_token(
-            token, 
-            requests.Request(), 
-            settings.GOOGLE_CLIENT_ID if settings.GOOGLE_CLIENT_ID else None
-        )
+        # List of all your Client IDs to avoid "Audience Mismatch"
+        allowed_audiences = [
+            # Web Client ID (Primary)
+            "421573514424-hodor4nbg2hat2janf57vsc26044mbrd.apps.googleusercontent.com",
+            # Android Client ID
+            "421573514424-gjgmg8dp49oafdf46sathpptk2u4fper.apps.googleusercontent.com",
+            # Desktop App ID (Optional fallback)
+            "421573514424-3vq2f4cnhb1bniu4hprli7mf1vnt3tnl.apps.googleusercontent.com"
+        ]
+        
+        print(f"[DEBUG] Verifying token for audiences: {allowed_audiences}")
+        try:
+            # Check if token audience is in our allowed list
+            idinfo = id_token.verify_oauth2_token(
+                token, 
+                requests.Request()
+            )
+            
+            if idinfo['aud'] not in allowed_audiences:
+                print(f"[ERROR] Audience mismatch: {idinfo['aud']} not in {allowed_audiences}")
+                raise ValueError(f"Wrong recipient. Audience was: {idinfo['aud']}")
+                
+        except Exception as e:
+            print(f"[ERROR] Token verification failed: {str(e)}")
+            raise e
 
         email = idinfo['email'].lower()
         print(f"[DEBUG] Google login successful for email: {email}")
@@ -317,6 +333,14 @@ def google_login(db: Session, token: str):
     except ValueError as e:
         # Invalid token
         print(f"[ERROR] Invalid Google token: {str(e)}")
+        try:
+            # Try to peek into the token without verification to see what's wrong (AUD mismatch?)
+            from jose import jwt
+            unverified_claims = jwt.get_unverified_claims(token)
+            print(f"[DEBUG] Unverified token claims: {unverified_claims}")
+            print(f"[DEBUG] Expected audience: {settings.GOOGLE_CLIENT_ID}")
+        except:
+            pass
         raise HTTPException(status_code=401, detail="Invalid Google token")
     except Exception as e:
         print(f"[ERROR] Unexpected error during Google login: {str(e)}")
