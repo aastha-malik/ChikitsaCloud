@@ -74,3 +74,12 @@ def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
     Confirm password reset with code.
     """
     return auth_service.confirm_password_reset(db, data.email, data.code, data.new_password)
+
+from app.schemas.auth import GoogleLoginRequest
+
+@router.post("/google-login")
+def google_login(data: GoogleLoginRequest, db: Session = Depends(get_db)):
+    """
+    Login or Signup using Google ID Token.
+    """
+    return auth_service.google_login(db, data.id_token)

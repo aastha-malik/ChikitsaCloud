@@ -19,3 +19,6 @@ class ResetPasswordRequest(BaseModel):
     email: EmailStr
     code: str
     new_password: str
+
+class GoogleLoginRequest(BaseModel):
+    id_token: str

@@ -12,6 +12,7 @@
 - `POST /auth/signup` - Register new user with email/password
 - `POST /auth/verify-email` - Verify email with code
 - `POST /auth/login` - Login and get access token
+- `POST /auth/google-login` - Login/Signup with Google ID Token
 
 ### ✅ User Profile (3 endpoints)
 - `POST /users/profile` - Create user profile (one-time)
@@ -92,5 +93,5 @@ SMTP_PASSWORD=your_app_password
 ```
 
 ---
-**Last Updated:** 2026-02-04
-**Status:** All APIs operational ✅
+**Last Updated:** 2026-02-19
+**Status:** All APIs operational (including Google Auth) ✅

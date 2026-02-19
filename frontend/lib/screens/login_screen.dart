@@ -3,6 +3,8 @@ import '../theme/app_theme.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/toggle_switch.dart';
+import 'package:provider/provider.dart';
+import '../presentation/providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,19 +15,26 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool isLogin = true;
+  bool _isLoading = false;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController(text: 'sarah@example.com');
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
   void _handleAuth() {
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+
       // Mock authentication
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(isLogin ? 'Logging in...' : 'Signing up...')),
@@ -34,9 +43,30 @@ class _LoginScreenState extends State<LoginScreen> {
       // Simulate delay then navigate
       Future.delayed(const Duration(seconds: 1), () {
         if (mounted) {
+           setState(() {
+            _isLoading = false;
+          });
            Navigator.pushReplacementNamed(context, '/home');
         }
       });
+    }
+  }
+
+  void _handleGoogleLogin() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    final success = await authProvider.googleLogin();
+    
+    if (success) {
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    } else {
+      if (mounted && authProvider.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(authProvider.errorMessage!)),
+        );
+      }
     }
   }
 
@@ -144,9 +174,29 @@ class _LoginScreenState extends State<LoginScreen> {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your password';
                         }
+                        if (!isLogin && value.length < 6) {
+                          return 'Password must be at least 6 characters';
+                        }
                         return null;
                       },
                     ),
+                    if (!isLogin) ...[
+                      const SizedBox(height: 16),
+                      CustomTextField(
+                        label: "Confirm Password",
+                        controller: _confirmPasswordController,
+                        obscureText: true,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please confirm your password';
+                          }
+                          if (value != _passwordController.text) {
+                            return 'Passwords do not match';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     if (isLogin)
                       Align(
@@ -176,7 +226,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     // Action Button
                     PrimaryButton(
                       text: isLogin ? "Login" : "Create Account",
-                      onPressed: _isLoading ? null : _handleAuth,
+                      onPressed: _handleAuth,
                       isLoading: _isLoading,
                     ),
                     const SizedBox(height: 24),
@@ -216,32 +266,35 @@ class _LoginScreenState extends State<LoginScreen> {
                     // Google Login Button
                     SizedBox(
                       width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Google login tapped'),
-                            ),
-                          );
-                        },
-                        icon: Image.asset(
-                          'assets/icons/google_logo.png',
-                          height: 20,
-                        ),
-                        label: const Text(
-                          "Login with Google",
-                          style: TextStyle(
-                            color: Color(0xFF1F2933),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                      child: OutlinedButton(
+                        onPressed: _handleGoogleLogin,
                         style: OutlinedButton.styleFrom(
                           backgroundColor: Colors.white,
-                          side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          side: const BorderSide(color: Color(0xFFE2E8F0)),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.network(
+                              'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1024px-Google_%22G%22_logo.svg.png',
+                              height: 24,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(Icons.login, size: 24),
+                            ),
+                            const SizedBox(width: 12),
+                            const Text(
+                              "Continue with Google",
+                              style: TextStyle(
+                                color: Color(0xFF1F2933),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

@@ -7,6 +7,9 @@ from app.models.user import AuthUser
 from app.schemas.auth import UserSignup, VerifyEmail, UserLogin
 from app.core import security
 from app.services import email_service
+from google.oauth2 import id_token
+from google.auth.transport import requests
+from app.core.config import settings
 
 def create_user(db: Session, user_data: UserSignup):
     # Normalize email
@@ -266,3 +269,55 @@ def confirm_password_reset(db: Session, email: str, code: str, new_password: str
     db.commit()
     
     return {"message": "Password reset successfully"}
+
+def google_login(db: Session, token: str):
+    try:
+        # Verify the ID token
+        # settings.GOOGLE_CLIENT_ID can be empty string if validation should bypass audience check locally
+        # but in production it's critical.
+        idinfo = id_token.verify_oauth2_token(
+            token, 
+            requests.Request(), 
+            settings.GOOGLE_CLIENT_ID if settings.GOOGLE_CLIENT_ID else None
+        )
+
+        email = idinfo['email'].lower()
+        print(f"[DEBUG] Google login successful for email: {email}")
+
+        # Check if user exists
+        user = db.query(AuthUser).filter(AuthUser.email == email).first()
+
+        if not user:
+            # Create new user
+            print(f"[DEBUG] Creating new user for Google login: {email}")
+            user = AuthUser(
+                email=email,
+                auth_provider="google",
+                is_email_verified=True # Google already verified the email
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        else:
+            # If user exists but registered with email, we might want to link or just allow
+            # For now, if they log in with Google, we trust it.
+            if user.auth_provider == "email":
+                print(f"[INFO] Linking existing email user {email} to Google auth")
+                user.auth_provider = "google"
+                user.is_email_verified = True
+                db.commit()
+
+        return {
+            "message": "Login successful",
+            "access_token": security.create_access_token(data={"sub": str(user.id)}),
+            "token_type": "bearer",
+            "user_id": str(user.id)
+        }
+
+    except ValueError as e:
+        # Invalid token
+        print(f"[ERROR] Invalid Google token: {str(e)}")
+        raise HTTPException(status_code=401, detail="Invalid Google token")
+    except Exception as e:
+        print(f"[ERROR] Unexpected error during Google login: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error during Google login")

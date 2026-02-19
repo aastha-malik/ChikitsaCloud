@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../data/repositories/auth_repository.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -12,6 +13,10 @@ class AuthProvider extends ChangeNotifier {
   bool _isAuthenticated = false;
   String? _userId;
   String? _userEmail;
+
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email'],
+  );
 
   AuthProvider(this._authRepository);
 
@@ -228,6 +233,58 @@ class AuthProvider extends ChangeNotifier {
     _userEmail = null;
     _isAuthenticated = false;
     notifyListeners();
+  }
+
+  Future<bool> googleLogin() async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      // 1. Sign in with Google
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        _setLoading(false);
+        return false;
+      }
+
+      // 2. Get ID Token
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        _setError('Failed to get Google ID token');
+        _setLoading(false);
+        return false;
+      }
+
+      // 3. Send to backend
+      final response = await _authRepository.googleLogin(idToken);
+      final token = response.data['access_token'];
+      final userId = response.data['user_id'];
+      final email = googleUser.email;
+
+      await _storage.write(key: 'auth_token', value: token);
+      await _storage.write(key: 'user_id', value: userId);
+      await _storage.write(key: 'user_email', value: email);
+
+      _userId = userId;
+      _userEmail = email;
+      _isAuthenticated = true;
+      _setLoading(false);
+      return true;
+    } on DioException catch (e) {
+      String errorMessage = 'Google login failed';
+      if (e.response?.data is Map) {
+        errorMessage = e.response?.data['detail'] ?? errorMessage;
+      }
+      _setError(errorMessage);
+      _setLoading(false);
+      return false;
+    } catch (e) {
+      print("[ERROR] Google sign in error: $e");
+      _setError('Google sign in failed');
+      _setLoading(false);
+      return false;
+    }
   }
 
   Future<void> checkAuthStatus() async {

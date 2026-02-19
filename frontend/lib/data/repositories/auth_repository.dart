@@ -100,4 +100,18 @@ class AuthRepository {
       rethrow;
     }
   }
+
+  Future<Response> googleLogin(String idToken) async {
+    try {
+      final response = await _apiClient.dio.post(
+        '/auth/google-login',
+        data: {
+          'id_token': idToken,
+        },
+      );
+      return response;
+    } on DioException catch (e) {
+      rethrow;
+    }
+  }
 }
