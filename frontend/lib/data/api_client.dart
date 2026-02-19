@@ -3,7 +3,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiClient {
-  static const String baseUrl = 'https://chikitsacloud-pn0c.onrender.com';
+  // Use 10.0.2.2 for Android Emulator, 127.0.0.1 for iOS/Desktop
+  static String get baseUrl {
+    if (kReleaseMode) {
+      return 'https://chikitsacloud-pn0c.onrender.com';
+    }
+    if (kIsWeb) return 'http://localhost:8000';
+    return defaultTargetPlatform == TargetPlatform.android
+        ? 'http://10.0.2.2:8000'
+        : 'http://127.0.0.1:8000';
+  }
   
   final Dio _dio;
   final FlutterSecureStorage _storage;
@@ -19,6 +28,7 @@ class ApiClient {
           },
         )),
         _storage = storage ?? const FlutterSecureStorage() {
+    debugPrint('[DEBUG] ApiClient initialized with baseUrl: ${baseUrl}');
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final fullUrl = '${options.baseUrl}${options.path}';

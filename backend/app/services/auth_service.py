@@ -105,9 +105,9 @@ def authenticate_user(db: Session, data: UserLogin):
         print(f"[WARNING] Login failed: User {email} not found")
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    # 2. Check auth provider
-    if user.auth_provider != "email":
-        print(f"[WARNING] Login failed: User {email} registered with {user.auth_provider}")
+    # 2. Check auth provider (Optional hint, not a block if they have a password)
+    if user.auth_provider != "email" and not user.password_hash:
+        print(f"[WARNING] Login failed: User {email} registered with {user.auth_provider} and has no password")
         raise HTTPException(status_code=400, detail=f"Please login with {user.auth_provider}")
         
     # 3. Check password

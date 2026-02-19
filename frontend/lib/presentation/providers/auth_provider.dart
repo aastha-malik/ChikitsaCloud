@@ -1,8 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_appauth/flutter_appauth.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../../config/secrets.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthRepository _authRepository;
@@ -14,9 +17,13 @@ class AuthProvider extends ChangeNotifier {
   String? _userId;
   String? _userEmail;
 
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email'],
-  );
+  // ─── Google OAuth2 Web Client ─────────────────────────────────────────────
+  // Credentials live in lib/config/secrets.dart (gitignored — never committed)
+  static const _googleClientId = GoogleSecrets.clientId;
+  static const _googleClientSecret = GoogleSecrets.clientSecret;
+  static const _redirectUri = 'com.example.chikitsa_cloud:/oauth2redirect';
+  // ─────────────────────────────────────────────────────────────────────────
+  final FlutterAppAuth _appAuth = const FlutterAppAuth();
 
   AuthProvider(this._authRepository);
 
@@ -45,6 +52,7 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(false);
       return true;
     } on DioException catch (e) {
+      debugPrint("[ERROR] Signup failed: ${e.response?.data}");
       String errorMessage = 'Signup failed';
       if (e.response?.data is Map) {
         errorMessage = e.response?.data['detail'] ?? errorMessage;
@@ -55,6 +63,7 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(false);
       return false;
     } catch (e) {
+      debugPrint("[ERROR] Signup unexpected error: $e");
       _setError('An unexpected error occurred');
       _setLoading(false);
       return false;
@@ -113,6 +122,7 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(false);
       return true;
     } on DioException catch (e) {
+      debugPrint("[ERROR] Login failed: ${e.response?.data}");
       String errorMessage = 'Login failed';
       if (e.response?.data is Map) {
         errorMessage = e.response?.data['detail'] ?? errorMessage;
@@ -123,6 +133,7 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(false);
       return false;
     } catch (e) {
+      debugPrint("[ERROR] Login unexpected error: $e");
       _setError('An unexpected error occurred');
       _setLoading(false);
       return false;
@@ -239,28 +250,54 @@ class AuthProvider extends ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
-      // 1. Sign in with Google
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
+      debugPrint('[DEBUG] Starting Google OAuth2 flow via AppAuth...');
+
+      final AuthorizationTokenResponse? result =
+          await _appAuth.authorizeAndExchangeCode(
+        AuthorizationTokenRequest(
+          _googleClientId,
+          _redirectUri,
+          clientSecret: _googleClientSecret,
+          serviceConfiguration: const AuthorizationServiceConfiguration(
+            authorizationEndpoint:
+                'https://accounts.google.com/o/oauth2/v2/auth',
+            tokenEndpoint: 'https://oauth2.googleapis.com/token',
+          ),
+          scopes: ['openid', 'email', 'profile'],
+        ),
+      );
+
+      if (result == null || result.idToken == null) {
+        debugPrint('[ERROR] AppAuth returned null or no ID token');
+        _setError('Google sign in was cancelled or failed.');
         _setLoading(false);
         return false;
       }
 
-      // 2. Get ID Token
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final String? idToken = googleAuth.idToken;
+      final idToken = result.idToken!;
+      debugPrint('[DEBUG] Got ID Token, sending to backend...');
 
-      if (idToken == null) {
-        _setError('Failed to get Google ID token');
-        _setLoading(false);
-        return false;
+      // Decode email from the ID token JWT payload (no library needed)
+      String email = '';
+      try {
+        final parts = idToken.split('.');
+        if (parts.length == 3) {
+          final payload = parts[1];
+          // Base64 padding fix
+          final normalized = base64Url.normalize(payload);
+          final decoded = utf8.decode(base64Url.decode(normalized));
+          final claims = json.decode(decoded) as Map<String, dynamic>;
+          email = claims['email'] ?? '';
+          debugPrint('[DEBUG] Extracted email from ID token: $email');
+        }
+      } catch (e) {
+        debugPrint('[WARN] Could not decode email from ID token: $e');
       }
 
-      // 3. Send to backend
+      // Send ID token to our FastAPI backend for verification
       final response = await _authRepository.googleLogin(idToken);
       final token = response.data['access_token'];
       final userId = response.data['user_id'];
-      final email = googleUser.email;
 
       await _storage.write(key: 'auth_token', value: token);
       await _storage.write(key: 'user_id', value: userId);
@@ -272,6 +309,7 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(false);
       return true;
     } on DioException catch (e) {
+      debugPrint('[ERROR] Backend Google login failed: ${e.response?.data}');
       String errorMessage = 'Google login failed';
       if (e.response?.data is Map) {
         errorMessage = e.response?.data['detail'] ?? errorMessage;
@@ -280,8 +318,8 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(false);
       return false;
     } catch (e) {
-      print("[ERROR] Google sign in error: $e");
-      _setError('Google sign in failed');
+      debugPrint('[ERROR] Google sign in error: $e');
+      _setError('Google sign in failed. Please try again.');
       _setLoading(false);
       return false;
     }

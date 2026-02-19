@@ -5,6 +5,7 @@ import '../widgets/primary_button.dart';
 import '../widgets/toggle_switch.dart';
 import 'package:provider/provider.dart';
 import '../presentation/providers/auth_provider.dart';
+import '../routes/app_routes.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,26 +30,41 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleAuth() {
+  void _handleAuth() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
 
-      // Mock authentication
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(isLogin ? 'Logging in...' : 'Signing up...')),
-      );
-      
-      // Simulate delay then navigate
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) {
-           setState(() {
-            _isLoading = false;
-          });
-           Navigator.pushReplacementNamed(context, '/home');
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+
+      bool success;
+      if (isLogin) {
+        success = await authProvider.login(email, password);
+      } else {
+        success = await authProvider.signup(email, password);
+      }
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (success) {
+          if (isLogin) {
+            Navigator.pushReplacementNamed(context, '/home');
+          } else {
+            // After signup, go to verification
+            Navigator.pushNamed(context, '/verify', arguments: email);
+          }
+        } else if (authProvider.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(authProvider.errorMessage!)),
+          );
         }
-      });
+      }
     }
   }
 
@@ -203,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: () {
-                            Navigator.pushNamed(context, '/forgot_password');
+                            Navigator.pushNamed(context, AppRoutes.resetPassword);
                           },
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,
@@ -263,38 +279,50 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Google Login Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: _handleGoogleLogin,
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          side: const BorderSide(color: Color(0xFFE2E8F0)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                    Consumer<AuthProvider>(
+                      builder: (context, auth, _) => SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: auth.isLoading ? null : _handleGoogleLogin,
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            side: const BorderSide(color: Color(0xFFE2E8F0)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Image.network(
-                              'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1024px-Google_%22G%22_logo.svg.png',
-                              height: 24,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(Icons.login, size: 24),
-                            ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              "Continue with Google",
-                              style: TextStyle(
-                                color: Color(0xFF1F2933),
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                          child: auth.isLoading
+                              ? const SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        AppTheme.primaryColor),
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Image.network(
+                                      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1024px-Google_%22G%22_logo.svg.png',
+                                      height: 24,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              const Icon(Icons.login, size: 24),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      "Continue with Google",
+                                      style: TextStyle(
+                                        color: Color(0xFF1F2933),
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                         ),
                       ),
                     ),

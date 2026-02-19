@@ -1,0 +1,33 @@
+# ─── Python ───────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+venv/
+.env
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# ─── Flutter / Dart ───────────────────────────────
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+*.ipr
+*.iws
+.idea/
+build/
+*.lock
+!pubspec.lock
+
+# ─── Secrets (NEVER commit these) ─────────────────
+frontend/lib/config/secrets.dart
+backend/.env
+google-services.json
+GoogleService-Info.plist
+
+# ─── OS ───────────────────────────────────────────
+.DS_Store
+Thumbs.db
