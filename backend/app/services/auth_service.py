@@ -271,6 +271,7 @@ def confirm_password_reset(db: Session, email: str, code: str, new_password: str
     return {"message": "Password reset successfully"}
 
 def google_login(db: Session, token: str):
+    try:
         # List of all your Client IDs to avoid "Audience Mismatch"
         allowed_audiences = [
             # Web Client ID (Primary)

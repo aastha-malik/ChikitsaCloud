@@ -13,6 +13,8 @@ import 'hospitals_screen.dart';
 import '../presentation/providers/theme_provider.dart';
 import 'analysis_screen.dart';
 import '../theme/app_theme.dart';
+import '../widgets/sos_button.dart';
+import '../utils/emergency_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -253,6 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
+              const SOSButton(),
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(

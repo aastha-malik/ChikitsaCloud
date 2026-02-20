@@ -6,6 +6,7 @@ import '../presentation/providers/auth_provider.dart';
 import '../routes/app_routes.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
+import '../utils/emergency_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -228,6 +229,27 @@ class SettingsScreen extends StatelessWidget {
                 subtitle: Text('Email us at aasthamalik.work@gmail.com', style: Theme.of(context).textTheme.bodyMedium),
                 trailing: Icon(Icons.chevron_right, color: Theme.of(context).textTheme.bodyMedium?.color),
                 onTap: _showContactOptions,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ListTile(
+                leading: const Icon(Icons.emergency_outlined, color: Colors.red),
+                title: const Text('Emergency SOS', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.red)),
+                subtitle: Text('Call emergency services (112)', style: Theme.of(context).textTheme.bodyMedium),
+                trailing: const Icon(Icons.call, color: Colors.red),
+                onTap: () => EmergencyService.triggerSOS(context),
               ),
             ),
             const SizedBox(height: 32),
