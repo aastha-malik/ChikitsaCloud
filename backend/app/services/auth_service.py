@@ -1,5 +1,6 @@
 import random
 import string
+import uuid
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
@@ -309,6 +310,7 @@ def google_login(db: Session, token: str):
             print(f"[DEBUG] Creating new user for Google login: {email}")
             user = AuthUser(
                 email=email,
+                password_hash=security.get_password_hash(str(uuid.uuid4())), # Satisfaction for NOT NULL constraint
                 auth_provider="google",
                 is_email_verified=True # Google already verified the email
             )

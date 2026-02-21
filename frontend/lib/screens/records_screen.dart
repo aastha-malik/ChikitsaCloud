@@ -169,6 +169,27 @@ class _RecordsScreenState extends State<RecordsScreen> {
         foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
         elevation: 0,
         centerTitle: true,
+        actions: [
+          if (!isViewingOthers)
+            Padding(
+              padding: const EdgeInsets.only(right: 16.0),
+              child: Center(
+                child: Material(
+                  color: AppTheme.primaryColor,
+                  shape: const CircleBorder(),
+                  elevation: 4,
+                  child: InkWell(
+                    onTap: _showUploadModal,
+                    customBorder: const CircleBorder(),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Icon(Icons.add, color: Colors.white, size: 24),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       body: Column(
         children: [
@@ -219,12 +240,6 @@ class _RecordsScreenState extends State<RecordsScreen> {
                 ),
           ),
         ],
-      ),
-      floatingActionButton: isViewingOthers ? null : FloatingActionButton(
-        heroTag: 'add_record',
-        onPressed: _showUploadModal,
-        backgroundColor: AppTheme.primaryColor,
-        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

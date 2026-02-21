@@ -10,33 +10,32 @@ class SOSButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: () => EmergencyService.triggerSOS(context),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(30),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
-            border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
-            borderRadius: BorderRadius.circular(20),
+            color: const Color(0xFFFF0000), // Pure bright red
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF0000).withOpacity(0.4),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.emergency, color: Colors.white, size: 14),
-              ),
-              const SizedBox(width: 8),
-              const Text(
+            children: const [
+              Icon(Icons.emergency, color: Colors.white, size: 24),
+              SizedBox(width: 8),
+              Text(
                 'SOS',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Colors.white, // Proper white
                   fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  letterSpacing: 0.5,
+                  fontSize: 18,
+                  letterSpacing: 1.0,
                 ),
               ),
             ],

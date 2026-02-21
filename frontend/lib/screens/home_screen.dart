@@ -98,6 +98,8 @@ class _HomeScreenState extends State<HomeScreen> {
         index: _selectedIndex,
         children: _bodies,
       ),
+      floatingActionButton: const SOSButton(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
@@ -255,7 +257,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              const SOSButton(),
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
