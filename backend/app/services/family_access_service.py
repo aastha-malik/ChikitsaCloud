@@ -72,12 +72,21 @@ def respond_to_access_request(db: Session, request_id: UUID, owner_id: UUID, acc
     request.responded_at = datetime.now(timezone.utc)
     
     if accept:
-        access = db.query(FamilyMedicalAccess).filter(
+        # 1. Grant viewer access to owner (Original)
+        access1 = db.query(FamilyMedicalAccess).filter(
             and_(FamilyMedicalAccess.owner_user_id == owner_id, FamilyMedicalAccess.viewer_user_id == request.requester_user_id)
         ).first()
-        if not access:
-            access = FamilyMedicalAccess(owner_user_id=owner_id, viewer_user_id=request.requester_user_id)
-            db.add(access)
+        if not access1:
+            access1 = FamilyMedicalAccess(owner_user_id=owner_id, viewer_user_id=request.requester_user_id)
+            db.add(access1)
+            
+        # 2. Grant owner access to viewer (Reciprocity)
+        access2 = db.query(FamilyMedicalAccess).filter(
+            and_(FamilyMedicalAccess.owner_user_id == request.requester_user_id, FamilyMedicalAccess.viewer_user_id == owner_id)
+        ).first()
+        if not access2:
+            access2 = FamilyMedicalAccess(owner_user_id=request.requester_user_id, viewer_user_id=owner_id)
+            db.add(access2)
     
     db.commit()
     db.refresh(request)
@@ -101,15 +110,18 @@ def get_active_access_for_viewer(db: Session, viewer_id: UUID):
         a.owner_email = u.email if u else "N/A"
     return access_list
 
-def revoke_access(db: Session, owner_id: UUID, viewer_id: UUID):
-    access = db.query(FamilyMedicalAccess).filter(
-        and_(FamilyMedicalAccess.owner_user_id == owner_id, FamilyMedicalAccess.viewer_user_id == viewer_id)
-    ).first()
-    if not access:
-        raise HTTPException(status_code=404, detail="Access not found")
-    db.delete(access)
+def revoke_access(db: Session, user_a: UUID, user_b: UUID):
+    # Delete both sides of the mutual access
+    db.query(FamilyMedicalAccess).filter(
+        and_(FamilyMedicalAccess.owner_user_id == user_a, FamilyMedicalAccess.viewer_user_id == user_b)
+    ).delete()
+    
+    db.query(FamilyMedicalAccess).filter(
+        and_(FamilyMedicalAccess.owner_user_id == user_b, FamilyMedicalAccess.viewer_user_id == user_a)
+    ).delete()
+    
     db.commit()
-    return {"message": "Access revoked"}
+    return {"message": "Mutual access revoked"}
 
 def check_medical_record_access(db: Session, viewer_id: UUID, owner_id: UUID) -> bool:
     if viewer_id == owner_id: return True

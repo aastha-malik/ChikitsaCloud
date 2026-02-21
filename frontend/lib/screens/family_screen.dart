@@ -232,9 +232,13 @@ class _FamilyScreenState extends State<FamilyScreen> {
   }
 
   Widget _buildRequestsTab(FamilyProvider provider) {
-    return ListView(
-      padding: const EdgeInsets.all(24),
-      children: [
+    debugPrint('[DEBUG] Pending: ${provider.pendingRequests.length}, Sent: ${provider.sentRequests.length}');
+    return RefreshIndicator(
+      onRefresh: () => provider.fetchRequests(),
+      child: ListView(
+        padding: const EdgeInsets.all(24),
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
         _buildSectionTitle('PENDING (INCOMING)'),
         const SizedBox(height: 12),
         if (provider.pendingRequests.isEmpty)
@@ -249,21 +253,15 @@ class _FamilyScreenState extends State<FamilyScreen> {
         else
           ...provider.sentRequests.map((r) => _buildSentRequestCard(r)),
         const SizedBox(height: 32),
-        _buildSectionTitle('ACTIVE ACCESS (YOU GRANTED)'),
+        _buildSectionTitle('MUTUAL ACCESS (FAMILY CONNECTIONS)'),
         const SizedBox(height: 12),
         if (provider.activeAccess.isEmpty)
-          Text('Not sharing access with anyone', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color))
+          Text('No active family connections', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color))
         else
-          ...provider.activeAccess.map((a) => _buildAccessCard(a, provider, true)),
-        const SizedBox(height: 32),
-        _buildSectionTitle('SHARED WITH ME (READ-ONLY)'),
-        const SizedBox(height: 12),
-        if (provider.sharedWithMe.isEmpty)
-          Text('No one has shared access with you', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color))
-        else
-          ...provider.sharedWithMe.map((a) => _buildAccessCard(a, provider, false)),
+          ...provider.activeAccess.map((a) => _buildAccessCard(a, provider)),
       ],
-    );
+    ),
+);
   }
 
   Widget _buildSentRequestCard(dynamic r) {
@@ -329,10 +327,10 @@ class _FamilyScreenState extends State<FamilyScreen> {
     );
   }
 
-  Widget _buildAccessCard(dynamic a, FamilyProvider provider, bool isOwner) {
-    final name = isOwner ? a['viewer_name'] : a['owner_name'];
-    final email = isOwner ? a['viewer_email'] : a['owner_email'];
-    final targetId = isOwner ? a['viewer_user_id'] : a['owner_user_id'];
+  Widget _buildAccessCard(dynamic a, FamilyProvider provider) {
+    final name = a['viewer_name'];
+    final email = a['viewer_email'];
+    final targetId = a['viewer_user_id'];
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -351,26 +349,24 @@ class _FamilyScreenState extends State<FamilyScreen> {
               ],
             ),
           ),
-          if (isOwner)
-            TextButton(
-              onPressed: () => provider.revokeAccess(targetId),
-              child: const Text('Revoke', style: TextStyle(color: Colors.red)),
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.chevron_right, color: AppTheme.primaryColor),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => RecordsScreen(
-                      ownerId: targetId,
-                      ownerName: name,
-                    ),
+          IconButton(
+            icon: const Icon(Icons.visibility_outlined, color: AppTheme.primaryColor),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => RecordsScreen(
+                    ownerId: targetId,
+                    ownerName: name,
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            onPressed: () => provider.revokeAccess(targetId),
+            icon: const Icon(Icons.delete_outline, color: Colors.red),
+          ),
         ],
       ),
     );

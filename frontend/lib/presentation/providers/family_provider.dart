@@ -24,7 +24,6 @@ class FamilyProvider with ChangeNotifier {
   List<dynamic> get activeAccess => _activeAccess;
 
   List<dynamic> _sharedWithMe = [];
-  List<dynamic> get sharedWithMe => _sharedWithMe;
 
   bool _isFetching = false;
 
@@ -56,14 +55,12 @@ class FamilyProvider with ChangeNotifier {
       final responses = await Future.wait([
         _apiClient.dio.get('/family-access/pending-requests'),
         _apiClient.dio.get('/family-access/active-access'),
-        _apiClient.dio.get('/family-access/shared-with-me'),
         _apiClient.dio.get('/family-access/sent-requests'),
       ]);
       
       _pendingRequests = responses[0].data;
       _activeAccess = responses[1].data;
-      _sharedWithMe = responses[2].data;
-      _sentRequests = responses[3].data;
+      _sentRequests = responses[2].data;
     } catch (e) {
       _errorMessage = "Failed to fetch requests: $e";
     } finally {
@@ -133,13 +130,11 @@ class FamilyProvider with ChangeNotifier {
       final responses = await Future.wait([
         _apiClient.dio.get('/family-access/pending-requests'),
         _apiClient.dio.get('/family-access/active-access'),
-        _apiClient.dio.get('/family-access/shared-with-me'),
         _apiClient.dio.get('/family-access/sent-requests'),
       ]);
       _pendingRequests = responses[0].data;
       _activeAccess = responses[1].data;
-      _sharedWithMe = responses[2].data;
-      _sentRequests = responses[3].data;
+      _sentRequests = responses[2].data;
     } catch (_) {}
   }
 
