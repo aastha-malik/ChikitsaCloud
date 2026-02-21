@@ -51,6 +51,14 @@ def get_pending_requests(
     return family_access_service.get_pending_requests_for_owner(db, current_user.id)
 
 
+@router.get("/sent-requests", response_model=List[AccessRequestOut])
+def get_sent_requests(
+    current_user: AuthUser = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return family_access_service.get_pending_requests_for_requester(db, current_user.id)
+
+
 # --- Active Access Management ---
 
 @router.get("/active-access", response_model=List[FamilyAccessOut])

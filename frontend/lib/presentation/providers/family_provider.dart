@@ -16,6 +16,9 @@ class FamilyProvider with ChangeNotifier {
   
   List<dynamic> _pendingRequests = [];
   List<dynamic> get pendingRequests => _pendingRequests;
+
+  List<dynamic> _sentRequests = [];
+  List<dynamic> get sentRequests => _sentRequests;
   
   List<dynamic> _activeAccess = [];
   List<dynamic> get activeAccess => _activeAccess;
@@ -54,11 +57,13 @@ class FamilyProvider with ChangeNotifier {
         _apiClient.dio.get('/family-access/pending-requests'),
         _apiClient.dio.get('/family-access/active-access'),
         _apiClient.dio.get('/family-access/shared-with-me'),
+        _apiClient.dio.get('/family-access/sent-requests'),
       ]);
       
       _pendingRequests = responses[0].data;
       _activeAccess = responses[1].data;
       _sharedWithMe = responses[2].data;
+      _sentRequests = responses[3].data;
     } catch (e) {
       _errorMessage = "Failed to fetch requests: $e";
     } finally {
@@ -129,10 +134,12 @@ class FamilyProvider with ChangeNotifier {
         _apiClient.dio.get('/family-access/pending-requests'),
         _apiClient.dio.get('/family-access/active-access'),
         _apiClient.dio.get('/family-access/shared-with-me'),
+        _apiClient.dio.get('/family-access/sent-requests'),
       ]);
       _pendingRequests = responses[0].data;
       _activeAccess = responses[1].data;
       _sharedWithMe = responses[2].data;
+      _sentRequests = responses[3].data;
     } catch (_) {}
   }
 

@@ -235,12 +235,19 @@ class _FamilyScreenState extends State<FamilyScreen> {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        _buildSectionTitle('PENDING REQUESTS'),
+        _buildSectionTitle('PENDING (INCOMING)'),
         const SizedBox(height: 12),
         if (provider.pendingRequests.isEmpty)
-          Text('No pending requests', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color))
+          Text('No incoming requests', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color))
         else
           ...provider.pendingRequests.map((r) => _buildRequestCard(r, provider)),
+        const SizedBox(height: 32),
+        _buildSectionTitle('SENT REQUESTS (WAITING)'),
+        const SizedBox(height: 12),
+        if (provider.sentRequests.isEmpty)
+          Text('No sent requests pending', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color))
+        else
+          ...provider.sentRequests.map((r) => _buildSentRequestCard(r)),
         const SizedBox(height: 32),
         _buildSectionTitle('ACTIVE ACCESS (YOU GRANTED)'),
         const SizedBox(height: 12),
@@ -256,6 +263,34 @@ class _FamilyScreenState extends State<FamilyScreen> {
         else
           ...provider.sharedWithMe.map((a) => _buildAccessCard(a, provider, false)),
       ],
+    );
+  }
+
+  Widget _buildSentRequestCard(dynamic r) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(20)),
+      child: Row(
+        children: [
+          CircleAvatar(backgroundColor: Colors.blue.shade50, child: Text(r['owner_name']?[0] ?? '?', style: const TextStyle(color: Colors.blue))),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Requested: ${r['owner_name']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(r['owner_email'] ?? 'N/A', style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color)),
+              ],
+            ),
+          ),
+          const Chip(
+            label: Text('Pending', style: TextStyle(fontSize: 10, color: Colors.blue)),
+            backgroundColor: Color(0xFFE3F2FD), // Subtle blue
+            visualDensity: VisualDensity.compact,
+          ),
+        ],
+      ),
     );
   }
 

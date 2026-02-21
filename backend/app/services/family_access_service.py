@@ -42,7 +42,7 @@ def send_access_request(db: Session, requester_id: UUID, owner_id: UUID):
 def _map_request(db, r):
     req_profile = db.query(UserProfile).filter(UserProfile.user_id == r.requester_user_id).first()
     req_auth = db.query(AuthUser).filter(AuthUser.id == r.requester_user_id).first()
-    own_profile = db.query(UserProfile).filter(UserProfile.id == r.owner_user_id).first()
+    own_profile = db.query(UserProfile).filter(UserProfile.user_id == r.owner_user_id).first()
     own_auth = db.query(AuthUser).filter(AuthUser.id == r.owner_user_id).first()
     
     r.requester_name = req_profile.name if req_profile else "Unknown"
@@ -54,6 +54,12 @@ def _map_request(db, r):
 def get_pending_requests_for_owner(db: Session, owner_id: UUID):
     requests = db.query(FamilyAccessRequest).filter(
         and_(FamilyAccessRequest.owner_user_id == owner_id, FamilyAccessRequest.status == "pending")
+    ).all()
+    return [_map_request(db, r) for r in requests]
+
+def get_pending_requests_for_requester(db: Session, requester_id: UUID):
+    requests = db.query(FamilyAccessRequest).filter(
+        and_(FamilyAccessRequest.requester_user_id == requester_id, FamilyAccessRequest.status == "pending")
     ).all()
     return [_map_request(db, r) for r in requests]
 
