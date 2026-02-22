@@ -8,7 +8,7 @@ class FeedbackProvider with ChangeNotifier {
   FeedbackProvider(this._repository);
 
   bool _isLoading = false;
-  bool _isLoading get => _isLoading;
+  bool get isLoading => _isLoading;
 
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
