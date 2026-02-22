@@ -7,6 +7,8 @@ import '../routes/app_routes.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import '../utils/emergency_service.dart';
+import '../presentation/providers/feedback_provider.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -145,6 +147,127 @@ class SettingsScreen extends StatelessWidget {
       );
     }
 
+    void _showFeedbackDialog() {
+      int selectedRating = 0;
+      final TextEditingController feedbackController = TextEditingController();
+
+      showDialog(
+        context: context,
+        builder: (context) => StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Theme.of(context).cardColor,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: const Column(
+                children: [
+                  Icon(Icons.stars_rounded, size: 48, color: AppTheme.primaryColor),
+                  SizedBox(height: 12),
+                  Text('Rate ChikitsaCloud', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'How is your experience so far?',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(5, (index) {
+                        return IconButton(
+                          icon: Icon(
+                            index < selectedRating ? Icons.star : Icons.star_border,
+                            color: Colors.amber,
+                            size: 32,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              selectedRating = index + 1;
+                            });
+                          },
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: feedbackController,
+                      maxLines: 3,
+                      style: const TextStyle(fontSize: 14),
+                      decoration: InputDecoration(
+                        hintText: 'Any specific feedback? (Optional)',
+                        hintStyle: TextStyle(color: Colors.grey.withOpacity(0.5), fontSize: 13),
+                        filled: true,
+                        fillColor: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Not now', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color)),
+                ),
+                Consumer<FeedbackProvider>(
+                  builder: (context, feedbackProvider, _) {
+                    return ElevatedButton(
+                      onPressed: (selectedRating == 0 || feedbackProvider.isLoading)
+                          ? null
+                          : () async {
+                              final success = await feedbackProvider.submitFeedback(
+                                rating: selectedRating,
+                                message: feedbackController.text,
+                              );
+                              if (success && context.mounted) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Thank you for your feedback!'),
+                                    backgroundColor: AppTheme.primaryColor,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              } else if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(feedbackProvider.errorMessage ?? 'Failed to submit feedback'),
+                                    backgroundColor: Colors.red,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
+                      ),
+                      child: feedbackProvider.isLoading
+                          ? SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: LoadingAnimationWidget.staggeredDotsWave(color: Colors.white, size: 20),
+                            )
+                          : const Text('Submit'),
+                    );
+                  },
+                ),
+              ],
+            );
+          },
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -229,6 +352,27 @@ class SettingsScreen extends StatelessWidget {
                 subtitle: Text('Email us at aasthamalik.work@gmail.com', style: Theme.of(context).textTheme.bodyMedium),
                 trailing: Icon(Icons.chevron_right, color: Theme.of(context).textTheme.bodyMedium?.color),
                 onTap: _showContactOptions,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ListTile(
+                leading: const Icon(Icons.star_outline_rounded, color: Colors.amber),
+                title: const Text('Rating & Feedback', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text('Rate your experience and share feedback', style: Theme.of(context).textTheme.bodyMedium),
+                trailing: Icon(Icons.chevron_right, color: Theme.of(context).textTheme.bodyMedium?.color),
+                onTap: _showFeedbackDialog,
               ),
             ),
             const SizedBox(height: 16),

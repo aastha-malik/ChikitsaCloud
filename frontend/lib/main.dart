@@ -14,6 +14,8 @@ import 'presentation/providers/profile_provider.dart';
 import 'presentation/providers/family_provider.dart';
 import 'presentation/providers/hospital_provider.dart';
 import 'presentation/providers/theme_provider.dart';
+import 'presentation/providers/feedback_provider.dart';
+import 'data/repositories/feedback_repository.dart';
 
 void main() {
   final apiClient = ApiClient();
@@ -21,6 +23,7 @@ void main() {
   final reportsRepository = ReportsRepository(apiClient);
   final analysisRepository = AnalysisRepository(apiClient);
   final profileRepository = ProfileRepository(apiClient);
+  final feedbackRepository = FeedbackRepository(apiClient);
 
   runApp(
     MultiProvider(
@@ -32,6 +35,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => FamilyProvider()),
         ChangeNotifierProvider(create: (_) => HospitalProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider(repository: profileRepository)),
+        ChangeNotifierProvider(create: (_) => FeedbackProvider(feedbackRepository)),
       ],
       child: const MyApp(),
     ),

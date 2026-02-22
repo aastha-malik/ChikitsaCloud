@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from app.core.config import settings
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import general, auth, users, medical_records, hospitals, medical
+from app.api import general, auth, users, medical_records, hospitals, medical, feedback
 from app.api import family_access as family_access_api
 
 # Note: Use Alembic migrations for production schema management
@@ -30,3 +30,4 @@ app.include_router(medical_records.router)
 app.include_router(medical.router)         
 app.include_router(family_access_api.router)
 app.include_router(hospitals.router)
+app.include_router(feedback.router)

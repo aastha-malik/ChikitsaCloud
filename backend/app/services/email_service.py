@@ -259,3 +259,58 @@ If you didn't request this, please ignore this email.
 """
     return _send_email_core(to_email, subject, html_body, plain_text)
 
+def send_feedback_email(rating: int, message: str, timestamp: str):
+    """
+    Sends the user feedback to the developer/admin email.
+    """
+    subject = f"New Feedback Received: {rating} Stars"
+    
+    # We send it to the SMTP_EMAIL (the owner)
+    to_email = settings.SMTP_EMAIL
+    
+    html_body = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; }}
+        .card {{ max-width: 500px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); overflow: hidden; border: 1px solid #e2e8f0; }}
+        .header {{ background: #1e293b; color: white; padding: 20px; text-align: center; }}
+        .rating {{ font-size: 32px; color: #f59e0b; margin: 10px 0; }}
+        .content {{ padding: 30px; line-height: 1.6; color: #334155; }}
+        .message-box {{ background: #f1f5f9; padding: 15px; border-radius: 8px; font-style: italic; margin-top: 10px; border-left: 4px solid #94a3b8; }}
+        .footer {{ padding: 15px; background: #f8fafc; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; }}
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="header">
+            <h2 style="margin:0;">New User Feedback</h2>
+            <div class="rating">{"★" * rating}{"☆" * (5-rating)}</div>
+        </div>
+        <div class="content">
+            <p><strong>Rating:</strong> {rating} / 5</p>
+            <p><strong>Submitted At:</strong> {timestamp}</p>
+            <p><strong>Feedback Message:</strong></p>
+            <div class="message-box">
+                {message if message else "No message provided."}
+            </div>
+        </div>
+        <div class="footer">
+            ChikitsaCloud Feedback System
+        </div>
+    </div>
+</body>
+</html>"""
+
+    plain_text = f"""
+NEW FEEDBACK RECEIVED
+---------------------
+Rating: {rating}/5
+Timestamp: {timestamp}
+
+Message:
+{message if message else "No message provided."}
+"""
+    return _send_email_core(to_email, subject, html_body, plain_text)
+
