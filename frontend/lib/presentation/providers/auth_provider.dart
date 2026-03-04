@@ -13,6 +13,7 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   bool _isAuthenticated = false;
+  bool _isCheckingAuth = true;
   String? _userId;
   String? _userEmail;
   bool _isNewGoogleUser = false;
@@ -33,6 +34,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _isAuthenticated;
+  bool get isCheckingAuth => _isCheckingAuth;
   String? get userId => _userId;
   String? get userEmail => _userEmail;
   bool get isNewGoogleUser => _isNewGoogleUser;
@@ -315,7 +317,8 @@ class AuthProvider extends ChangeNotifier {
       _userId = userId;
       _userEmail = userEmail;
       _isAuthenticated = true;
-      notifyListeners();
     }
+    _isCheckingAuth = false;
+    notifyListeners();
   }
 }

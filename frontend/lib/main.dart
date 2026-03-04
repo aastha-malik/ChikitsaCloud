@@ -16,6 +16,8 @@ import 'presentation/providers/hospital_provider.dart';
 import 'presentation/providers/theme_provider.dart';
 import 'presentation/providers/feedback_provider.dart';
 import 'data/repositories/feedback_repository.dart';
+import 'screens/login_screen.dart';
+import 'screens/home_screen.dart';
 
 void main() {
   final apiClient = ApiClient();
@@ -48,15 +50,32 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    
+
     return MaterialApp(
       title: 'ChikitsaCloud',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeProvider.themeMode,
-      initialRoute: AppRoutes.login,
+      home: const AuthGate(),
       routes: AppRoutes.routes,
     );
+  }
+}
+
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
+
+    if (auth.isCheckingAuth) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return auth.isAuthenticated ? const HomeScreen() : const LoginScreen();
   }
 }
