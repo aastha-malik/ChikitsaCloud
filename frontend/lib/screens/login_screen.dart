@@ -70,12 +70,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleGoogleLogin() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
+
     final success = await authProvider.googleLogin();
-    
+
     if (success) {
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
+        if (authProvider.isNewGoogleUser) {
+          Navigator.pushReplacementNamed(context, '/user-info');
+        } else {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
       }
     } else {
       if (mounted && authProvider.errorMessage != null) {

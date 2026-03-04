@@ -15,6 +15,7 @@ class AuthProvider extends ChangeNotifier {
   bool _isAuthenticated = false;
   String? _userId;
   String? _userEmail;
+  bool _isNewGoogleUser = false;
 
   // ─── Google OAuth2 Native (using google_sign_in + google-services.json) ────
   final GoogleSignIn _googleSignIn = GoogleSignIn(
@@ -34,6 +35,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _isAuthenticated;
   String? get userId => _userId;
   String? get userEmail => _userEmail;
+  bool get isNewGoogleUser => _isNewGoogleUser;
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -285,6 +287,7 @@ class AuthProvider extends ChangeNotifier {
       _userId = userId;
       _userEmail = email;
       _isAuthenticated = true;
+      _isNewGoogleUser = response.data['is_new_user'] == true;
       _setLoading(false);
       return true;
     } on DioException catch (e) {

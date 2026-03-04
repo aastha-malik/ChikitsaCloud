@@ -305,8 +305,10 @@ def google_login(db: Session, token: str):
         # Check if user exists
         user = db.query(AuthUser).filter(AuthUser.email == email).first()
 
+        is_new_user = False
         if not user:
             # Create new user
+            is_new_user = True
             print(f"[DEBUG] Creating new user for Google login: {email}")
             user = AuthUser(
                 email=email,
@@ -330,7 +332,8 @@ def google_login(db: Session, token: str):
             "message": "Login successful",
             "access_token": security.create_access_token(data={"sub": str(user.id)}),
             "token_type": "bearer",
-            "user_id": str(user.id)
+            "user_id": str(user.id),
+            "is_new_user": is_new_user
         }
 
     except ValueError as e:
