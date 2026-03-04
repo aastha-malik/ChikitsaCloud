@@ -19,6 +19,10 @@ class ApiClient {
   final FlutterSecureStorage _storage;
   final GlobalKey<NavigatorState>? _navigatorKey;
 
+  /// Called when a 401 is received at runtime (e.g. token expired mid-session).
+  /// AuthProvider registers its logout() method here so state is properly reset.
+  VoidCallback? onUnauthorized;
+
   ApiClient({Dio? dio, FlutterSecureStorage? storage, GlobalKey<NavigatorState>? navigatorKey})
       : _dio = dio ?? Dio(BaseOptions(
           baseUrl: baseUrl,
@@ -63,11 +67,13 @@ class ApiClient {
         debugPrint('Error Message: ${e.message}');
         debugPrint('Error Data: ${e.response?.data}');
         if (e.response?.statusCode == 401) {
-          // Token expired at runtime — clear session and go to login
           debugPrint('[AUTH] 401 received at runtime, clearing session and redirecting to login');
           await _storage.delete(key: 'auth_token');
           await _storage.delete(key: 'user_id');
           await _storage.delete(key: 'user_email');
+          // Notify AuthProvider so _isAuthenticated is reset and AuthGate rebuilds
+          onUnauthorized?.call();
+          // Clear all routes and show login
           _navigatorKey?.currentState?.pushNamedAndRemoveUntil(
             '/login',
             (route) => false,

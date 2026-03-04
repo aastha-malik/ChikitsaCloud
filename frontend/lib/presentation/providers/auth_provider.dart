@@ -29,7 +29,17 @@ class AuthProvider extends ChangeNotifier {
     serverClientId: GoogleSecrets.clientId,
   );
 
-  AuthProvider(this._authRepository);
+  AuthProvider(this._authRepository) {
+    // When ApiClient receives a 401 at runtime, reset auth state so AuthGate shows login
+    _authRepository.apiClient.onUnauthorized = _resetAuthState;
+  }
+
+  void _resetAuthState() {
+    _userId = null;
+    _userEmail = null;
+    _isAuthenticated = false;
+    notifyListeners();
+  }
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;

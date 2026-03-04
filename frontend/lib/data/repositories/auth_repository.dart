@@ -6,6 +6,8 @@ class AuthRepository {
 
   AuthRepository(this._apiClient);
 
+  ApiClient get apiClient => _apiClient;
+
   Future<Response> signup(String email, String password) async {
     try {
       final response = await _apiClient.dio.post(
