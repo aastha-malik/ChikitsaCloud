@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiClient {
@@ -13,11 +14,12 @@ class ApiClient {
         ? 'http://10.0.2.2:8000'
         : 'http://127.0.0.1:8000';
   }
-  
+
   final Dio _dio;
   final FlutterSecureStorage _storage;
+  final GlobalKey<NavigatorState>? _navigatorKey;
 
-  ApiClient({Dio? dio, FlutterSecureStorage? storage})
+  ApiClient({Dio? dio, FlutterSecureStorage? storage, GlobalKey<NavigatorState>? navigatorKey})
       : _dio = dio ?? Dio(BaseOptions(
           baseUrl: baseUrl,
           connectTimeout: const Duration(seconds: 15),
@@ -27,7 +29,8 @@ class ApiClient {
             'Accept': 'application/json',
           },
         )),
-        _storage = storage ?? const FlutterSecureStorage() {
+        _storage = storage ?? const FlutterSecureStorage(),
+        _navigatorKey = navigatorKey {
     debugPrint('[DEBUG] ApiClient initialized with baseUrl: ${baseUrl}');
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
@@ -37,7 +40,7 @@ class ApiClient {
         debugPrint('Method: ${options.method}');
         debugPrint('Headers: ${options.headers}');
         debugPrint('Body: ${options.data}');
-        
+
         try {
           final token = await _storage.read(key: 'auth_token');
           if (token != null) {
@@ -54,13 +57,21 @@ class ApiClient {
         debugPrint('Response Body: ${response.data}');
         return handler.next(response);
       },
-      onError: (DioException e, handler) {
+      onError: (DioException e, handler) async {
         debugPrint('--- API ERROR ---');
         debugPrint('Status Code: ${e.response?.statusCode}');
         debugPrint('Error Message: ${e.message}');
         debugPrint('Error Data: ${e.response?.data}');
         if (e.response?.statusCode == 401) {
-          // Handle unauthorized
+          // Token expired at runtime — clear session and go to login
+          debugPrint('[AUTH] 401 received at runtime, clearing session and redirecting to login');
+          await _storage.delete(key: 'auth_token');
+          await _storage.delete(key: 'user_id');
+          await _storage.delete(key: 'user_email');
+          _navigatorKey?.currentState?.pushNamedAndRemoveUntil(
+            '/login',
+            (route) => false,
+          );
         }
         return handler.next(e);
       },

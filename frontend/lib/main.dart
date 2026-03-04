@@ -19,8 +19,10 @@ import 'data/repositories/feedback_repository.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() {
-  final apiClient = ApiClient();
+  final apiClient = ApiClient(navigatorKey: navigatorKey);
   final authRepository = AuthRepository(apiClient);
   final reportsRepository = ReportsRepository(apiClient);
   final analysisRepository = AnalysisRepository(apiClient);
@@ -57,6 +59,7 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeProvider.themeMode,
+      navigatorKey: navigatorKey,
       home: const AuthGate(),
       routes: AppRoutes.routes,
     );

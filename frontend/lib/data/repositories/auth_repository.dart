@@ -114,4 +114,13 @@ class AuthRepository {
       rethrow;
     }
   }
+
+  Future<Response> validateToken() async {
+    try {
+      final response = await _apiClient.dio.get('/users/profile');
+      return response;
+    } on DioException catch (e) {
+      rethrow;
+    }
+  }
 }

@@ -313,11 +313,37 @@ class AuthProvider extends ChangeNotifier {
     final token = await _storage.read(key: 'auth_token');
     final userId = await _storage.read(key: 'user_id');
     final userEmail = await _storage.read(key: 'user_email');
+
     if (token != null && userId != null) {
-      _userId = userId;
-      _userEmail = userEmail;
-      _isAuthenticated = true;
+      try {
+        // Validate token against server
+        await _authRepository.validateToken();
+        _userId = userId;
+        _userEmail = userEmail;
+        _isAuthenticated = true;
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 401) {
+          // Token expired or invalid — clear credentials
+          debugPrint('[AUTH] Token invalid (401), clearing session');
+          await _storage.delete(key: 'auth_token');
+          await _storage.delete(key: 'user_id');
+          await _storage.delete(key: 'user_email');
+        } else {
+          // Network error (offline) — trust local token, show dashboard
+          debugPrint('[AUTH] Network error during token check, assuming valid: $e');
+          _userId = userId;
+          _userEmail = userEmail;
+          _isAuthenticated = true;
+        }
+      } catch (e) {
+        // Unexpected error — trust local token
+        debugPrint('[AUTH] Unexpected error during token check: $e');
+        _userId = userId;
+        _userEmail = userEmail;
+        _isAuthenticated = true;
+      }
     }
+
     _isCheckingAuth = false;
     notifyListeners();
   }
