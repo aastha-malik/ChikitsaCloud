@@ -6,7 +6,6 @@ from app.schemas.auth import UserSignup, VerifyEmail, UserLogin, ResendVerificat
 from app.services import auth_service
 from app.api.deps import get_current_user
 from app.models.user import AuthUser
-from typing import Optional
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 

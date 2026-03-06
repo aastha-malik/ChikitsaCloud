@@ -1,0 +1,5 @@
+{
+    "kiroAgent.configureMCP": "Disabled",
+    "python.defaultInterpreterPath": "/home/asus/Desktop/Code/ChikitsaCloud-main/backend/venv/bin/python",
+    "pyre2.enabled": false
+}

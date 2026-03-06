@@ -1,0 +1,4 @@
+{
+    "source_directories": ["backend"],
+    "search_path": ["backend/venv/lib/python3.12/site-packages"]
+}
