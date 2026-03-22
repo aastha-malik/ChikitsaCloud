@@ -15,7 +15,6 @@ from app.core.config import settings
 def create_user(db: Session, user_data: UserSignup):
     # Normalize email
     email = user_data.email.strip().lower()
-    print(f"[DEBUG] Starting signup for email: {email}")
     # 1. Check if email exists
     existing_user = db.query(AuthUser).filter(AuthUser.email == email).first()
     if existing_user:
@@ -30,7 +29,6 @@ def create_user(db: Session, user_data: UserSignup):
     
     # 3. Generate Verification Code (6 digits)
     code = ''.join(random.choices(string.digits, k=6))
-    print(f"[DEBUG] Generated verification code for {email}: {code}")
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
     
     # 4. Create User Record
@@ -52,7 +50,7 @@ def create_user(db: Session, user_data: UserSignup):
     try:
         email_service.send_verification_email(new_user.email, code)
     except Exception as e:
-        print(f"[CRITICAL] Backend failed to send email. MANUAL VERIFICATION CODE for {new_user.email} is: {code}")
+        print(f"[CRITICAL] Failed to send verification email to {new_user.email}")
     
     return {
         "message": "User created successfully. Please verify your email.", 
@@ -60,33 +58,64 @@ def create_user(db: Session, user_data: UserSignup):
         "email": email
     }
 
+OTP_MAX_ATTEMPTS = 3
+OTP_LOCKOUT_MINUTES = 15
+
+def _check_otp_lockout(user: AuthUser):
+    """Raise 429 if user is currently locked out from OTP attempts."""
+    if user.otp_locked_until and user.otp_locked_until.replace(tzinfo=timezone.utc) > datetime.now(timezone.utc):
+        remaining = int((user.otp_locked_until.replace(tzinfo=timezone.utc) - datetime.now(timezone.utc)).total_seconds() / 60) + 1
+        raise HTTPException(
+            status_code=429,
+            detail=f"Too many failed attempts. Try again in {remaining} minute(s)."
+        )
+
+def _record_otp_failure(db: Session, user: AuthUser):
+    """Increment failure counter; lock account after max attempts."""
+    user.otp_failed_attempts = (user.otp_failed_attempts or 0) + 1
+    if user.otp_failed_attempts >= OTP_MAX_ATTEMPTS:
+        user.otp_locked_until = datetime.now(timezone.utc) + timedelta(minutes=OTP_LOCKOUT_MINUTES)
+        user.otp_failed_attempts = 0
+    db.commit()
+
+def _clear_otp_attempts(db: Session, user: AuthUser):
+    """Reset counter on successful OTP verification."""
+    user.otp_failed_attempts = 0
+    user.otp_locked_until = None
+    db.commit()
+
 def verify_email(db: Session, data: VerifyEmail):
     email = data.email.strip().lower()
     user = db.query(AuthUser).filter(AuthUser.email == email).first()
-    
+
     # 1. Check user exists
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     # 2. Check already verified
     if user.is_email_verified:
         return {"message": "Email already verified"}
-    
-    # 3. Validate code match
+
+    # 3. Check lockout
+    _check_otp_lockout(user)
+
+    # 4. Validate code match
     if user.email_verification_code != data.verification_code:
+        _record_otp_failure(db, user)
         raise HTTPException(status_code=400, detail="Invalid verification code")
-    
-    # 4. Validate expiry
+
+    # 5. Validate expiry
     if user.email_verification_expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
         raise HTTPException(status_code=400, detail="Verification code expired")
-    
-    # 5. Success: Update user
+
+    # 6. Success: Update user
+    _clear_otp_attempts(db, user)
     user.is_email_verified = True
     user.email_verification_code = None
     user.email_verification_expires_at = None
-    
+
     db.commit()
-    
+
     return {
         "message": "Email verified successfully",
         "access_token": security.create_access_token(data={"sub": str(user.id)}),
@@ -146,7 +175,6 @@ def resend_verification(db: Session, email: str):
     
     # Generate NEW code
     code = ''.join(random.choices(string.digits, k=6))
-    print(f"[DEBUG] Generated NEW verification code for {email}: {code}")
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
     
     user.email_verification_code = code
@@ -156,7 +184,7 @@ def resend_verification(db: Session, email: str):
     try:
         email_service.send_verification_email(email, code)
     except Exception as e:
-        print(f"[CRITICAL] Backend failed to resend email. MANUAL CODE for {email} is: {code}")
+        print(f"[CRITICAL] Failed to resend verification email to {email}")
         
     return {"message": "Verification code resent successfully"}
 
@@ -227,7 +255,6 @@ def request_password_reset(db: Session, email: str):
 
     # Generate Code
     code = ''.join(random.choices(string.digits, k=6))
-    print(f"[DEBUG] Generated RESET code for {email}: {code}")
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
     
     # Store in same columns as verification for now, or add new ones?
@@ -240,35 +267,37 @@ def request_password_reset(db: Session, email: str):
         # Reusing the existing email function but should ideally be specific template
         email_service.send_password_reset_email(email, code)
     except Exception as e:
-        print(f"[CRITICAL] Backend failed to send reset email. MANUAL CODE for {email} is: {code}")
+        print(f"[CRITICAL] Failed to send password reset email to {email}")
         
     return {"message": "Reset code sent successfully"}
 
 def confirm_password_reset(db: Session, email: str, code: str, new_password: str):
     email = email.strip().lower()
     user = db.query(AuthUser).filter(AuthUser.email == email).first()
-    
+
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-        
+
+    # Check lockout
+    _check_otp_lockout(user)
+
     # Validate code
     if user.email_verification_code != code:
+        _record_otp_failure(db, user)
         raise HTTPException(status_code=400, detail="Invalid reset code")
-        
+
     # Validate expiry
     if user.email_verification_expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
         raise HTTPException(status_code=400, detail="Reset code expired")
-        
-    # Update password
-    hashed_password = security.get_password_hash(new_password)
-    user.password_hash = hashed_password
-    
-    # Clear code
+
+    # Update password and clear code
+    _clear_otp_attempts(db, user)
+    user.password_hash = security.get_password_hash(new_password)
     user.email_verification_code = None
     user.email_verification_expires_at = None
-    
+
     db.commit()
-    
+
     return {"message": "Password reset successfully"}
 
 def google_login(db: Session, token: str):
