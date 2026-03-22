@@ -163,7 +163,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   label: 'New Password',
                   controller: _passwordController,
                   obscureText: true,
-                  validator: (val) => (val == null || val.length < 6) ? 'Min 6 characters' : null,
+                  validator: (val) {
+                    if (val == null || val.isEmpty) return 'Enter a new password';
+                    if (val.length < 8) return 'Password must be at least 8 characters';
+                    if (!RegExp(r'[A-Z]').hasMatch(val)) return 'Must include an uppercase letter';
+                    if (!RegExp(r'[a-z]').hasMatch(val)) return 'Must include a lowercase letter';
+                    if (!RegExp(r'\d').hasMatch(val)) return 'Must include a number';
+                    if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>\-_=+\[\]\\;' + "'/`~]").hasMatch(val)) return 'Must include a special character';
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
                 CustomTextField(

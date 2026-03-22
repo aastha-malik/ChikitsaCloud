@@ -194,8 +194,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your password';
                         }
-                        if (!isLogin && value.length < 6) {
-                          return 'Password must be at least 6 characters';
+                        if (!isLogin) {
+                          if (value.length < 8) return 'Password must be at least 8 characters';
+                          if (!RegExp(r'[A-Z]').hasMatch(value)) return 'Must include an uppercase letter';
+                          if (!RegExp(r'[a-z]').hasMatch(value)) return 'Must include a lowercase letter';
+                          if (!RegExp(r'\d').hasMatch(value)) return 'Must include a number';
+                          if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>\-_=+\[\]\\;' + "'/`~]").hasMatch(value)) return 'Must include a special character';
                         }
                         return null;
                       },
